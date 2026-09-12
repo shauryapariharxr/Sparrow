@@ -1,0 +1,29 @@
+{
+  "name": "redex",
+  "version": "0.1.0",
+  "description": "Redex — multi-tenant, HTTP-accessible Redis-compatible data store (Upstash-style). Hand-built Redis core engine + REST gateway + control plane + dashboard. Zero runtime dependencies.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "redex": "bin/redex.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test --test-reporter=spec",
+    "cli": "node bin/redex.js",
+    "check": "node --check src/index.js && node --check bin/redex.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "upstash",
+    "serverless",
+    "http",
+    "key-value",
+    "rest"
+  ]
+}
