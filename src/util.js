@@ -12,8 +12,8 @@ function randomId(len = 16) {
 }
 
 function generateToken() {
-  // redex_ + 43 chars of [A-Za-z0-9] ~= 256 bits of entropy
-  return 'redex_' + randomId(43);
+  // sparrow_ + 43 chars of [A-Za-z0-9] ~= 256 bits of entropy
+  return 'sparrow_' + randomId(43);
 }
 
 function sha256hex(s) {

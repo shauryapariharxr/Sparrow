@@ -94,7 +94,7 @@ class Keyspace {
     if (this.limits.maxKeys && this.map.size >= this.limits.maxKeys) {
       return { ok: false, error: 'maxkeys' };
     }
-    const mem = 64 + initialMem;
+    const mem = 64 + (initialMem || 0);
     if (this.limits.maxMemoryBytes && this.stats.memoryBytes + mem + this.sizeKey(key) > this.limits.maxMemoryBytes) {
       return { ok: false, error: 'OOM' };
     }
@@ -195,6 +195,16 @@ class Keyspace {
       if (!this.isExpired(v, now)) n++;
     }
     return n;
+  }
+
+  /** Live (non-expired) keys as latin1 strings — read-only, used by introspection. */
+  listLiveKeys() {
+    const now = this.nowFn();
+    const out = [];
+    for (const [k, v] of this.map) {
+      if (!this.isExpired(v, now)) out.push(k);
+    }
+    return out;
   }
 
   clear() {

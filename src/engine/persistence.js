@@ -110,7 +110,7 @@ class Persistence {
       } catch (e) {
         // Corrupt snapshot: fall back to full AOF replay rather than crash.
         snapshotMarker = 0;
-        console.error(`[redex:persistence] snapshot load failed for ${this.dbId}: ${e.message}`);
+        console.error(`[sparrow:persistence] snapshot load failed for ${this.dbId}: ${e.message}`);
       }
     }
 
@@ -138,7 +138,7 @@ class Persistence {
           aofCommands++;
         }
       } catch (e) {
-        console.error(`[redex:persistence] AOF load failed for ${this.dbId}: ${e.message}`);
+        console.error(`[sparrow:persistence] AOF load failed for ${this.dbId}: ${e.message}`);
       }
     }
 

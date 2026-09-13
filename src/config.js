@@ -47,7 +47,7 @@ const config = {
   sessionTtlHours: int('REDEX_SESSION_TTL_HOURS', 168),
 };
 
-config.cookieName = 'redex_session';
+config.cookieName = 'sparrow_session';
 config.engineDb = path.join(config.dataDir, 'engine.db');
 
 module.exports = config;

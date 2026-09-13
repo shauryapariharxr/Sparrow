@@ -43,7 +43,7 @@ class TenantDb {
   snapshotIfDue() {
     if (this.dirtySinceSnapshot) {
       try { this.persistence.saveRdb(); this.dirtySinceSnapshot = false; } catch (e) {
-        console.error(`[redex:tenant ${this.dbId}] snapshot failed: ${e.message}`);
+        console.error(`[sparrow:tenant ${this.dbId}] snapshot failed: ${e.message}`);
       }
     }
   }
@@ -77,7 +77,7 @@ class TenantManager {
           this.tenants.delete(dbId);
         }
       } catch (e) {
-        console.error(`[redex:tenant ${dbId}] background cycle error: ${e.message}`);
+        console.error(`[sparrow:tenant ${dbId}] background cycle error: ${e.message}`);
       }
     }
     this.stats.loadedTenants = this.tenants.size;
@@ -112,7 +112,7 @@ class TenantManager {
     this.tenants.set(dbId, tdb);
     this.stats.loadedTenants = this.tenants.size;
     if (st.aofCommands > 0 || st.snapshotKeys > 0) {
-      console.log(`[redex:tenant ${dbId}] loaded ${st.snapshotKeys} keys from snapshot, ${st.aofCommands} AOF commands`);
+      console.log(`[sparrow:tenant ${dbId}] loaded ${st.snapshotKeys} keys from snapshot, ${st.aofCommands} AOF commands`);
     }
     return tdb;
   }

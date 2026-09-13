@@ -42,6 +42,55 @@ class Engine {
     return this.keyspace.getValue(key);
   }
 
+  /** Read-only introspection for the dashboard data browser. */
+  describeKey(key) {
+    this.keyspace.checkExpired(key);
+    const v = this.keyspace.getValue(key);
+    if (!v) return null;
+    const now = this.now();
+    const entry = { key, type: v.kind, ttl: v.expireAtMs === null ? -1 : Math.max(0, Math.round((v.expireAtMs - now) / 1000)) };
+    try {
+      switch (v.kind) {
+        case 'string': {
+          const s = v.data instanceof Buffer ? v.data.toString('utf8') : String(v.data);
+          entry.preview = s;
+          entry.size = v.data ? v.data.length : 0;
+          break;
+        }
+        case 'list': {
+          const a = v.data || [];
+          entry.preview = a.map((x) => (x instanceof Buffer ? x.toString('utf8') : String(x)));
+          entry.size = a.length;
+          break;
+        }
+        case 'set': {
+          const a = Array.from(v.data || []);
+          entry.preview = a.map((x) => (x instanceof Buffer ? x.toString('utf8') : String(x)));
+          entry.size = a.length;
+          break;
+        }
+        case 'zset': {
+          const sorted = (v.data && v.data.sorted) || [];
+          entry.preview = sorted.map(([m, s]) => [m instanceof Buffer ? m.toString('utf8') : String(m), s]);
+          entry.size = sorted.length;
+          break;
+        }
+        case 'hash': {
+          const o = {};
+          for (const [f, val] of v.data || new Map()) o[f instanceof Buffer ? f.toString('utf8') : String(f)] = val instanceof Buffer ? val.toString('utf8') : String(val);
+          entry.preview = o;
+          entry.size = (v.data || new Map()).size;
+          break;
+        }
+        default:
+          entry.preview = null;
+      }
+    } catch {
+      entry.preview = null;
+    }
+    return entry;
+  }
+
   /** Lazy expiry touch used by read paths (cheap, no allocation). */
   touch(key) {
     this.keyspace.checkExpired(key);

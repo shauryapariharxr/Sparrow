@@ -2,16 +2,16 @@
 'use strict';
 
 /**
- * Redex CLI
+ * Sparrow CLI
  *
- *   redex up                                   start the server
- *   redex signup --email a@b.c --password s    create an account
- *   redex create --email a@b.c --password s --name mydb
- *                                              provision a database + token
- *   redex call --db db_x --token redex_... GET key
- *   redex call --db db_x --token redex_... '["SET","k","v"]'
- *   redex pipe  --db db_x --token redex_... '[["SET","k","1"],["INCR","k"]]'
- *   redex sub   --db db_x --token redex_... mychannel
+ *   sparrow up                                   start the server
+ *   sparrow signup --email a@b.c --password s    create an account
+ *   sparrow create --email a@b.c --password s --name mydb
+ *                                                provision a database + token
+ *   sparrow call --db db_x --token sparrow_... GET key
+ *   sparrow call --db db_x --token sparrow_... '["SET","k","v"]'
+ *   sparrow pipe  --db db_x --token sparrow_... '[["SET","k","1"],["INCR","k"]]'
+ *   sparrow sub   --db db_x --token sparrow_... mychannel
  */
 
 const args = process.argv.slice(2);
@@ -32,7 +32,7 @@ function required(name, value) {
 }
 
 function baseUrl() {
-  return process.env.REDEX_URL || `http://127.0.0.1:${process.env.REDEX_PORT || 8080}`;
+  return process.env.SPARROW_URL || process.env.REDEX_URL || `http://127.0.0.1:${process.env.REDEX_PORT || process.env.PORT || 8080}`;
 }
 
 async function jsonFetch(path, opts = {}) {
@@ -146,20 +146,20 @@ async function main() {
     }
 
     default: {
-      console.log(`redex — Redis-compatible data stores over HTTPS
+      console.log(`sparrow — Redis-compatible data stores over HTTPS
 
 usage:
-  redex up                                   start server (http://127.0.0.1:8080)
-  redex signup --email E --password P        create an account
-  redex create --email E --password P --name mydb
-                                             provision database + token
-  redex call --db DBID --token TOK GET key   run one command (path style)
-  redex call --db DBID --token TOK '["GET","key"]'
-  redex pipe  --db DBID --token TOK '[["SET","k","1"],["INCR","k"]]'
-  redex sub   --db DBID --token TOK mychannel
+  sparrow up                                   start server (http://127.0.0.1:8080)
+  sparrow signup --email E --password P        create an account
+  sparrow create --email E --password P --name mydb
+                                               provision database + token
+  sparrow call --db DBID --token TOK GET key   run one command (path style)
+  sparrow call --db DBID --token TOK '["GET","key"]'
+  sparrow pipe  --db DBID --token TOK '[["SET","k","1"],["INCR","k"]]'
+  sparrow sub   --db DBID --token TOK mychannel
 
 env:
-  REDEX_URL    base URL of a running server (default http://127.0.0.1:8080)`);
+  SPARROW_URL  base URL of a running server (default http://127.0.0.1:8080)`);
       break;
     }
   }

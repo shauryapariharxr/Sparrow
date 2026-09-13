@@ -1,6 +1,8 @@
-# Redex
+# Sparrow
 
-**Redis-as-a-Service, Upstash-style** — a multi-tenant, HTTP-accessible Redis-compatible data store. Users sign up, create a *database*, and get a REST endpoint + API token. Every Redis command is a plain HTTPS call: no client library, no persistent connection — a single `fetch()` or `curl` works, which makes it usable from serverless and edge runtimes.
+**Serverless Redis over REST** — a multi-tenant, Redis-compatible data platform. Users sign up, create a *database*, and get a REST endpoint + API token. Every Redis command is a plain HTTPS call: no client library, no persistent connection — a single `fetch()` or `curl` works, which makes it usable from serverless and edge runtimes.
+
+Includes a complete product surface: **marketing landing page, login/signup, and a console dashboard** — all in a clean dark Upstash-style UI with the Sparrow logo.
 
 Built with **zero runtime dependencies** on Node.js ≥ 22.5 (uses the built-in `node:sqlite` for the control plane).
 
@@ -10,6 +12,7 @@ Client (fetch / curl / SDK)
         ▼
 ┌──────────────────────┐
 │   REST API Gateway   │  auth · rate limit · routing · JSON ⇄ replies
+│      + Web tier      │  landing · login/signup · dashboard · assets
 └──────────┬───────────┘
            │  in-process command dispatch (or RESP on loopback)
            ▼
@@ -34,18 +37,21 @@ Control plane (same process, separate SQLite + routes)
 ```bash
 npm start
 # → gateway on http://127.0.0.1:8080
-# → dashboard at http://127.0.0.1:8080/dashboard
+# → landing page at http://127.0.0.1:8080/
+# → console at http://127.0.0.1:8080/dashboard
 # → RESP debug server on redis://127.0.0.1:6379 (loopback only)
 ```
 
-Provision and use a database with the CLI:
+**UI flow:** open `/` → **Start free** → sign up → **Create database** → **Tokens** tab → mint a token (shown once, remembered in the browser for the built-in CLI and data browser) → try `SET greeting "hello"` in the **CLI** tab → inspect live keys in **Data browser**.
+
+Provision and use a database with the CLI instead:
 
 ```bash
 node bin/redex.js signup --email me@example.com --password secret123
 node bin/redex.js create --email me@example.com --password secret123 --name mydb
 # → prints the API token (shown only once)
 
-TOK=redex_...
+TOK=sparrow_...
 node bin/redex.js call --db db_x --token $TOK SET hello world
 node bin/redex.js call --db x --token $TOK '["GET","hello"]'
 node bin/redex.js pipe  --db x --token $TOK '[["INCR","c"],["INCR","c"]]'
@@ -61,9 +67,26 @@ curl -X POST localhost:8080/databases -d '{"name":"mydb"}' -H 'Content-Type: app
 curl -X POST localhost:8080/databases/<dbId>/tokens -d '{}' -H 'Content-Type: application/json' -b jar
 ```
 
+## Web app
+
+| Route | What it is |
+|---|---|
+| `/` | Marketing landing page — animated hero, live command demo, feature grid, quickstart |
+| `/login`, `/signup` | Auth (shared page, scrypt-hashed passwords, HttpOnly session cookies) |
+| `/dashboard` | Console: database cards, per-DB overview (commands/day sparkline, keys, memory, limits), data browser, token management, and a Redis CLI with history |
+| `/logo.svg`, `/favicon.svg` | Sparrow brand assets |
+
+Dashboard-only introspection endpoints (session-cookie auth, ownership-checked):
+
+```
+GET /usage/:dbId            { usage: { today, history }, storage: { keys, memoryBytes } }
+GET /storage/:dbId          { keys, memoryBytes, limits }
+GET /databases/:dbId/data   up to 200 live keys with type / value preview / TTL
+```
+
 ## REST API (data plane)
 
-All data-plane requests need `Authorization: Bearer redex_...`.
+All data-plane requests need `Authorization: Bearer sparrow_...`.
 
 **Path style** — command name and args in the URL:
 
@@ -79,7 +102,7 @@ curl -X POST https://host/ -H "Authorization: Bearer $TOK" \
      -d '["SET","mykey","myvalue","EX","60"]'
 ```
 
-**Pipeline** — many commands, one round trip (atomicity: none, like Upstash pipeline; responses come back in order):
+**Pipeline** — many commands, one round trip (responses come back in order):
 
 ```bash
 curl -X POST https://host/pipeline -H "Authorization: Bearer $TOK" \
@@ -120,11 +143,11 @@ Response conventions: success → `{"result": ...}`, error → `{"error":"..."}`
 
 ## Architecture notes
 
-**Multi-tenancy.** Each database gets an isolated `Keyspace` instance in the shared engine (per-tenant `Map`, stats, memory accounting, pub/sub hub) rather than key-prefix mangling — a tenant's keys are physically unreachable from another tenant's command path. The namespace is always derived from the authenticated token; nothing the client sends can select a keyspace.
+**Multi-tenancy.** Each database gets an isolated `Keyspace` instance in the shared engine (per-tenant `Map`, stats, memory accounting, pub/sub hub) rather than key-prefix mangling — a tenant's keys are physically unreachable from another tenant's command path. The namespace is always derived from the authenticated token; nothing the client sends can select a keyspace. Dashboard introspection endpoints likewise derive scope from the session cookie plus an ownership check in SQL.
 
 **Persistence.** Per-tenant `data/engine/<dbId>/appendonly.aof` (JSON-lines, fsync `always`) plus atomic snapshots (`snapshot.rdb`, tmp+rename). Snapshots carry an AOF sequence marker so reload replays only the tail after the snapshot — no double-application. Compaction rewrites snapshot + truncates AOF. A background cycle sweeps expirations, snapshots dirty tenants, and unloads idle tenants.
 
-**Auth & tokens.** API tokens are `redex_` + 43 base62 chars (~256 bits), stored only as SHA-256 hashes; a 10 s in-memory hash→tenant cache fronts the SQLite lookup. Read-only tokens are enforced per command against a read-command allowlist. Dashboard sessions are opaque `sess_` tokens in HttpOnly cookies; passwords are scrypt-hashed.
+**Auth & tokens.** API tokens are `sparrow_` + 43 base62 chars (~256 bits), stored only as SHA-256 hashes; a 10 s in-memory hash→tenant cache fronts the SQLite lookup. Read-only tokens are enforced per command against a read-command allowlist. Dashboard sessions are opaque `sess_` tokens in HttpOnly cookies; passwords are scrypt-hashed. Tokens are shown once at creation; the console can remember one per database in `localStorage` for its data browser/CLI.
 
 **Quotas & limits.** Per-database `maxKeys`, `maxMemoryBytes` (approximate, incrementally tracked per value), `maxValueBytes`; per-token token-bucket rate limiting with burst and `X-RateLimit-*` headers; per-request payload cap; pipeline cost scales with command count.
 
@@ -155,7 +178,7 @@ src/
   util.js                  ids, tokens, hashing, HTTP helpers
   engine/
     store.js               Keyspace: map, expiry index, memory accounting
-    engine.js              per-tenant Engine + command dispatch
+    engine.js              per-tenant Engine + command dispatch + introspection
     commands_core.js       strings, keyspace, expiry, server commands
     commands_collections.js lists, sets, zsets, hashes
     cmdutil.js / zsetutil.js  parsing, glob, score/lex ranges
@@ -170,8 +193,13 @@ src/
     index.js               HTTP surface (data + control plane)
     rateLimiter.js         token buckets
     serialization.js       replies → JSON
-  dashboard/
-    index.js               single-file dashboard SPA
+  web/
+    server.js              page/asset serving + session-scoped introspection API
+    landing.html           marketing page
+    auth.html              login/signup
+    dashboard.html         console SPA
+    sparrow.svg            logo (white sparrow mark)
+    favicon.svg            favicon (sparrow on brand tile)
 test/                      node:test suites (engine, persistence, gateway)
 bin/redex.js               CLI
 scripts/e2e-live.js        live end-to-end check against a running server
@@ -180,11 +208,10 @@ scripts/e2e-live.js        live end-to-end check against a running server
 ## Tests
 
 ```bash
-npm test          # 44 tests: engine semantics, persistence, gateway e2e
-node scripts/e2e-live.js   # against a running server (BASE=http://127.0.0.1:8090)
+npm test                  # 46 tests: engine semantics, persistence, gateway + web e2e
+node scripts/e2e-live.js  # against a running server (BASE=http://127.0.0.1:8080)
 ```
 
 ## Roadmap beyond v1
 
 Per the design's non-goals, deliberately out of scope for now: native TCP for external users, multi-region replication, horizontal sharding, billing. Natural next steps: WebSocket subscribe, Lua scripting (`EVAL`), sorted-set `ZUNION`/`ZINTER` (non-store), stream type, per-tenant engine processes for hard isolation at higher tiers.
-"# Sparrow" 

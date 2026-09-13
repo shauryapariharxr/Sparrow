@@ -7,7 +7,7 @@ const os = require('os');
 const path = require('path');
 
 // Isolated instance for the test run.
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'redex-gw-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sparrow-gw-'));
 process.env.REDEX_DATA_DIR = path.join(tmp, 'engine');
 process.env.REDEX_SQLITE_PATH = path.join(tmp, 'control.db');
 process.env.REDEX_PORT = '0';
@@ -57,7 +57,7 @@ test('signup + login issues session cookie', async () => {
   const email = 'alice@example.com';
   const su = await api('/auth/signup', { method: 'POST', auth: false, body: { email, password: 'supersecret1' } });
   assert.strictEqual(su.status, 201);
-  assert.ok(su.headers.get('set-cookie').includes('redex_session='));
+  assert.ok(su.headers.get('set-cookie').includes('sparrow_session='));
   const lg = await api('/auth/login', { method: 'POST', auth: false, body: { email, password: 'supersecret1' } });
   assert.strictEqual(lg.status, 200);
   cookie = (lg.headers.get('set-cookie') || '').split(';')[0];
@@ -80,7 +80,7 @@ test('create database + token', async () => {
   const t = await api(`/databases/${dbId}/tokens`, { method: 'POST', body: { name: 'primary' } });
   assert.strictEqual(t.status, 201);
   token = t.data.token_plaintext;
-  assert.ok(token.startsWith('redex_') && token.length > 40);
+  assert.ok(token.startsWith('sparrow_') && token.length > 40);
 
   const tro = await api(`/databases/${dbId}/tokens`, { method: 'POST', body: { name: 'ro', readonly: true } });
   readonlyToken = tro.data.token_plaintext;
@@ -116,7 +116,7 @@ test('wrongtype surfaces as JSON error', async () => {
 test('auth: missing/invalid bearer tokens rejected', async () => {
   const r1 = await api('/get/greeting', { method: 'POST', auth: false });
   assert.strictEqual(r1.status, 401);
-  const r2 = await api('/get/greeting', { method: 'POST', auth: false, tok: 'redex_totallybogus' });
+  const r2 = await api('/get/greeting', { method: 'POST', auth: false, tok: 'sparrow_totallybogus' });
   assert.strictEqual(r2.status, 401);
 });
 
@@ -167,6 +167,7 @@ test('usage endpoint reflects daily counters', async () => {
 });
 
 test('rate limiting kicks in on burst', async () => {
+  const savedCookie = cookie;
   const email = 'bob@example.com';
   await api('/auth/signup', { method: 'POST', auth: false, body: { email, password: 'supersecret2' } });
   cookie = (await api('/auth/login', { method: 'POST', auth: false, body: { email, password: 'supersecret2' } })).headers.get('set-cookie').split(';')[0];
@@ -182,6 +183,7 @@ test('rate limiting kicks in on burst', async () => {
   }
   assert.ok(got429, `expected a 429 within 80 requests (last=${last.status})`);
   assert.ok(last.data.error.includes('Rate limit'));
+  cookie = savedCookie; // restore alice's session for later tests
 });
 
 test('oversized payload rejected with 413', async () => {
@@ -197,7 +199,46 @@ test('dashboard page serves HTML', async () => {
   const res = await fetch(baseUrl + '/dashboard');
   assert.strictEqual(res.status, 200);
   const html = await res.text();
-  assert.ok(html.includes('<title>Redex Console</title>'));
+  assert.ok(html.includes('<title>Sparrow Console</title>'));
+});
+
+test('web: landing + login pages and logo asset', async () => {
+  const land = await fetch(baseUrl + '/');
+  const html = await land.text();
+  assert.ok(land.status === 200);
+  assert.ok(html.includes('<title>Sparrow'), 'landing title');
+  assert.ok(html.includes('/logo.svg'), 'logo referenced');
+  const logo = await fetch(baseUrl + '/logo.svg');
+  assert.strictEqual(logo.status, 200);
+  assert.ok((logo.headers.get('content-type') || '').includes('image/svg+xml'));
+  const auth = await fetch(baseUrl + '/login');
+  const authHtml = await auth.text();
+  assert.ok(auth.status === 200 && authHtml.includes('Welcome back'));
+});
+
+test('web: session-scoped introspection endpoints', async () => {
+  // still signed in as alice (cookie) with dbId from earlier tests
+  const u = await api(`/usage/${dbId}`, { method: 'GET' });
+  assert.strictEqual(u.status, 200);
+  assert.ok(u.data.usage && typeof u.data.usage.today === 'number');
+  assert.ok(typeof u.data.storage.keys === 'number');
+
+  const s = await api(`/storage/${dbId}`, { method: 'GET' });
+  assert.strictEqual(s.status, 200);
+  assert.ok(typeof s.data.keys === 'number' && typeof s.data.memoryBytes === 'number');
+  assert.ok(s.data.limits && typeof s.data.limits.maxKeys === 'number');
+
+  const d = await api(`/databases/${dbId}/data`, { method: 'GET' });
+  assert.strictEqual(d.status, 200);
+  assert.ok(Array.isArray(d.data.keys));
+  const found = d.data.keys.find((k) => k.key === 'greeting');
+  assert.ok(found, 'greeting key listed');
+  assert.strictEqual(found.type, 'string');
+  assert.strictEqual(found.preview, 'hello');
+
+  // no session → 401
+  const anon = await fetch(`${baseUrl}/usage/${dbId}`);
+  assert.strictEqual(anon.status, 401);
 });
 
 test('health endpoint', async () => {

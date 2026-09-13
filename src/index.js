@@ -28,9 +28,9 @@ function startRespDebugServer({ control, tenants, config }) {
   const { RespServer } = require('./engine/respServer');
   const resp = new RespServer({ control, tenants, host: '127.0.0.1', port: config.respPort });
   resp.start().then(() => {
-    console.log(`[redex] RESP debug server on redis://${config.host === '0.0.0.0' ? '127.0.0.1' : config.host}:${config.respPort}`);
+    console.log(`[sparrow] RESP debug server on redis://${config.host === '0.0.0.0' ? '127.0.0.1' : config.host}:${config.respPort}`);
   }).catch((e) => {
-    console.warn(`[redex] RESP debug server unavailable: ${e.message}`);
+    console.warn(`[sparrow] RESP debug server unavailable: ${e.message}`);
   });
   return resp;
 }
@@ -40,9 +40,9 @@ function main() {
 
   tenants.start();
   server.listen(cfg.port, cfg.host, () => {
-    console.log(`[redex] gateway listening on http://${cfg.host}:${cfg.port}`);
-    console.log(`[redex] dashboard: http://${cfg.host}:${cfg.port}/dashboard`);
-    console.log(`[redex] data dir: ${cfg.dataDir}`);
+    console.log(`[sparrow] gateway listening on http://${cfg.host}:${cfg.port}`);
+    console.log(`[sparrow] landing: http://${cfg.host}:${cfg.port}  ·  console: http://${cfg.host}:${cfg.port}/dashboard`);
+    console.log(`[sparrow] data dir: ${cfg.dataDir}`);
   });
 
   const resp = startRespDebugServer({ control, tenants, config: cfg });
@@ -51,7 +51,7 @@ function main() {
   const shutdown = (signal) => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`\n[redex] received ${signal}, flushing and closing...`);
+    console.log(`\n[sparrow] received ${signal}, flushing and closing...`);
     server.close();
     if (resp) resp.stop();
     tenants.stop();          // flush + snapshot everything

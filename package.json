@@ -1,11 +1,11 @@
 {
-  "name": "redex",
-  "version": "0.1.0",
-  "description": "Redex — multi-tenant, HTTP-accessible Redis-compatible data store (Upstash-style). Hand-built Redis core engine + REST gateway + control plane + dashboard. Zero runtime dependencies.",
+  "name": "sparrow",
+  "version": "0.2.0",
+  "description": "Sparrow — multi-tenant, HTTP-accessible Redis-compatible data platform (Upstash-style). Landing page, auth, dashboard, hand-built Redis core engine, REST gateway, control plane. Zero runtime dependencies.",
   "type": "commonjs",
   "main": "src/index.js",
   "bin": {
-    "redex": "bin/redex.js"
+    "sparrow": "bin/redex.js"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -21,6 +21,7 @@
   "keywords": [
     "redis",
     "upstash",
+    "sparrow",
     "serverless",
     "http",
     "key-value",

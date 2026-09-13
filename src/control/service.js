@@ -149,7 +149,7 @@ class ControlService {
 
   /** Resolve an API bearer token to its tenant database. Cached briefly. */
   authenticateApiToken(rawToken) {
-    if (typeof rawToken !== 'string' || !rawToken.startsWith('redex_')) return null;
+    if (typeof rawToken !== 'string' || !rawToken.startsWith('sparrow_')) return null;
     const hash = sha256hex(rawToken);
     const cached = this._tokenCache.get(hash);
     const now = Date.now();

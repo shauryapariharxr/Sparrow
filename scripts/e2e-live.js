@@ -1,5 +1,5 @@
 'use strict';
-/* Live end-to-end check against a running Redex server. */
+/* Live end-to-end check against a running Sparrow server. */
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090';
 let failures = 0;
@@ -46,7 +46,7 @@ async function main() {
 
   r = await j(`/databases/${dbId}/tokens`, { method: 'POST', cookie, body: { name: 'primary' } });
   const tok = r.data && r.data.token_plaintext;
-  check('create token', r.status === 201 && String(tok).startsWith('redex_'));
+  check('create token', r.status === 201 && String(tok).startsWith('sparrow_'));
 
   // path style
   r = await j('/set/foo/bar', { method: 'POST', token: tok });
@@ -94,15 +94,30 @@ async function main() {
   check('usage endpoint', r.status === 200 && r.data.usage.today >= 5 && typeof r.data.storage.keys === 'number', JSON.stringify(r.data));
 
   // auth failures
-  r = await j('/get/foo', { method: 'POST', token: 'redex_bogus' });
+  r = await j('/get/foo', { method: 'POST', token: 'sparrow_bogus' });
   check('invalid token rejected', r.status === 401);
   r = await fetch(BASE + '/get/foo', { method: 'POST' });
   check('missing auth rejected', r.status === 401);
 
   // dashboard
+  // web pages
+  const home = await fetch(BASE + '/');
+  const homeHtml = await home.text();
+  check('landing page', home.status === 200 && homeHtml.includes('Serverless data'));
+  const login = await fetch(BASE + '/login');
+  check('login page', login.status === 200 && (await login.text()).includes('Welcome back'));
+  const logo = await fetch(BASE + '/logo.svg');
+  check('logo asset', logo.status === 200 && (logo.headers.get('content-type') || '').includes('svg'));
+
   const dash = await fetch(BASE + '/dashboard');
   const html = await dash.text();
-  check('dashboard served', dash.status === 200 && html.includes('Redex Console'));
+  check('dashboard served', dash.status === 200 && html.includes('Sparrow Console'));
+
+  // session-scoped introspection
+  r = await j(`/usage/${dbId}`, { cookie });
+  check('session usage endpoint', r.status === 200 && r.data.usage && typeof r.data.usage.today === 'number', JSON.stringify(r.data));
+  r = await j(`/databases/${dbId}/data`, { cookie });
+  check('session data browser endpoint', r.status === 200 && Array.isArray(r.data.keys) && r.data.keys.some((k) => k.key === 'foo'), JSON.stringify(r.data).slice(0, 200));
 
   // SSE pub/sub
   const ac = new AbortController();

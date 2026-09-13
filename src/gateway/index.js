@@ -62,6 +62,8 @@ class Gateway {
     this.config = config;
     this.usage = new UsageBuffer(control);
     this.startedAt = Date.now();
+    const { WebApi } = require('../web/server');
+    this.web = new WebApi({ control, tenants, config });
   }
 
   stop() { this.usage.stop(); }
@@ -77,28 +79,18 @@ class Gateway {
       if (pathname === '/healthz' || pathname === '/healthz/') {
         return sendJson(res, 200, { ok: true, uptimeSec: Math.floor((Date.now() - this.startedAt) / 1000), loadedTenants: this.tenants.stats.loadedTenants });
       }
-      if (pathname === '/' && req.method === 'GET') {
-        return sendJson(res, 200, {
-          service: 'redex', version: '0.1.0',
-          endpoints: {
-            command: 'POST /{CMD}/{args}  (Bearer token)',
-            pipeline: 'POST /pipeline  { "commands": [["SET","k","v"], ["GET","k"]] }',
-            subscribe: 'GET /subscribe/{channel}  (SSE)',
-            usage: 'GET /usage  (Bearer token)',
-            dashboard: 'GET /dashboard',
-          },
-        });
-      }
+      // Web: landing/auth/dashboard pages, assets, dashboard introspection API
+      if (this.web.tryHandle(req, res, pathname)) return;
 
       // Control plane
-      if (pathname.startsWith('/auth/') || pathname === '/databases' || pathname.startsWith('/databases/') || pathname.startsWith('/tokens/') || pathname === '/dashboard') {
+      if (pathname.startsWith('/auth/') || pathname === '/databases' || pathname.startsWith('/databases/') || pathname.startsWith('/tokens/')) {
         return this.handleControl(req, res, pathname);
       }
 
       // Data plane below this point
       return await this.handleData(req, res, pathname, url);
     } catch (err) {
-      console.error(`[redex:gateway] ${req.method} ${pathname} failed:`, err);
+      console.error(`[sparrow:gateway] ${req.method} ${pathname} failed:`, err);
       if (!res.writableEnded) sendJson(res, 500, { error: 'Internal error' });
     }
   }
@@ -123,7 +115,7 @@ class Gateway {
       this.usage.flush(); // make buffered counts visible immediately
       const info = this.engineInfo(auth.db);
       const usage = this.control.getUsageSummary(auth.db.id);
-      return sendJson(res, 200, { database: { id: auth.db.id, name: auth.db.name }, usage, storage: info }, { 'X-Redex-Database': auth.db.id });
+      return sendJson(res, 200, { database: { id: auth.db.id, name: auth.db.name }, usage, storage: info }, { 'X-Sparrow-Database': auth.db.id });
     }
 
     // Pub/sub over SSE
@@ -194,7 +186,7 @@ class Gateway {
         this.usage.bump(auth.db.id);
         return replyToJson(tdb.execute(a.argv));
       });
-      return sendJson(res, 200, results, { 'X-Redex-Database': auth.db.id, ...rlHeaders });
+      return sendJson(res, 200, results, { 'X-Sparrow-Database': auth.db.id, ...rlHeaders });
     }
 
     // Single command
@@ -211,7 +203,7 @@ class Gateway {
     const reply = tdb.execute(a.argv);
     const body = replyToJson(reply);
     const status = body.error ? 400 : 200;
-    return sendJson(res, status, body, { 'X-Redex-Database': auth.db.id, ...rlHeaders });
+    return sendJson(res, status, body, { 'X-Sparrow-Database': auth.db.id, ...rlHeaders });
   }
 
   handleSubscribe(req, res, auth, channel) {
@@ -273,12 +265,6 @@ class Gateway {
   // ── control plane ───────────────────────────────────────────────
   async handleControl(req, res, pathname) {
     const method = req.method;
-
-    if (pathname === '/dashboard') {
-      const { dashboardHtml } = require('../dashboard');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(dashboardHtml);
-    }
 
     if (pathname === '/auth/signup' && method === 'POST') return this.authSignup(req, res);
     if (pathname === '/auth/login' && method === 'POST') return this.authLogin(req, res);
@@ -378,7 +364,10 @@ class Gateway {
 }
 
 function publicDb(db) {
-  return { id: db.id, name: db.name, createdAt: db.createdAt };
+  return {
+    id: db.id, name: db.name, createdAt: db.createdAt,
+    maxKeys: db.maxKeys, maxMemoryBytes: db.maxMemoryBytes, maxValueBytes: db.maxValueBytes,
+  };
 }
 
 function decodeSafe(s) {
