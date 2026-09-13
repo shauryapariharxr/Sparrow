@@ -1,6 +1,42 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
+
+/**
+ * Minimal dotenv-style loader for `.env.local` (then `.env`).
+ * Real environment variables always win over file values.
+ * Supports comments, [section] headers, quoted values and inline comments.
+ */
+function loadEnvFile(file) {
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return;
+  }
+  for (let line of text.split(/\r?\n/)) {
+    line = line.trim();
+    if (!line || line.startsWith('#') || line.startsWith('[')) continue;
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim();
+    let val = line.slice(eq + 1).trim();
+    if (!key) continue;
+    if ((val.startsWith('"') && val.endsWith('"') && val.length >= 2) ||
+        (val.startsWith("'") && val.endsWith("'") && val.length >= 2)) {
+      val = val.slice(1, -1);
+    } else {
+      const hash = val.indexOf(' #');
+      if (hash !== -1) val = val.slice(0, hash).trim();
+    }
+    if (!(key in process.env)) process.env[key] = val;
+  }
+}
+
+const root = process.cwd();
+loadEnvFile(path.join(root, '.env'));
+loadEnvFile(path.join(root, '.env.local')); // higher precedence than .env
 
 const int = (name, def) => {
   const v = process.env[name];
@@ -15,11 +51,9 @@ const bool = (name, def) => {
   return v !== '0' && v.toLowerCase() !== 'false' && v !== 'no';
 };
 
-const root = process.cwd();
-
 const config = {
-  host: process.env.REDEX_HOST || '127.0.0.1',
-  port: int('REDEX_PORT', 8080),
+  host: process.env.REDEX_HOST || process.env.SPARROW_HOST || '127.0.0.1',
+  port: int('REDEX_PORT', int('SPARROW_PORT', 8080)),
 
   sqlitePath: process.env.REDEX_SQLITE_PATH || path.join(root, 'data', 'control.db'),
 

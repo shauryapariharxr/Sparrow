@@ -207,8 +207,8 @@ test('web: landing + login pages and logo asset', async () => {
   const html = await land.text();
   assert.ok(land.status === 200);
   assert.ok(html.includes('<title>Sparrow'), 'landing title');
-  assert.ok(html.includes('/logo.svg'), 'logo referenced');
-  const logo = await fetch(baseUrl + '/logo.svg');
+  assert.ok(html.includes('/logo-gradient.svg'), 'logo referenced');
+  const logo = await fetch(baseUrl + '/logo-gradient.svg');
   assert.strictEqual(logo.status, 200);
   assert.ok((logo.headers.get('content-type') || '').includes('image/svg+xml'));
   const auth = await fetch(baseUrl + '/login');

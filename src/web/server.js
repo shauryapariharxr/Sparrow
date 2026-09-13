@@ -39,6 +39,7 @@ const PAGES = {
 const STATIC_FILES = {
   '/favicon.svg': 'favicon.svg',
   '/logo.svg': 'sparrow.svg',
+  '/logo-gradient.svg': 'sparrow-gradient.svg',
 };
 
 function contentType(p) {

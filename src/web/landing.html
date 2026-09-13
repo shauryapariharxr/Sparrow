@@ -6,66 +6,112 @@
 <title>Sparrow — Serverless Redis over REST</title>
 <meta name="description" content="Sparrow is a Redis-compatible data platform you call over plain HTTPS. One fetch() from anywhere — serverless, edge, browser.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('sparrow-theme')||'dark');</script>
 <style>
 :root{
-  --bg:#09090b; --bg2:#0d0d10; --panel:#101014; --panel2:#141419;
+  --bg:#0a0a0c; --bg2:#0d0d10; --panel:#101014; --panel2:#141419;
   --border:#202027; --border2:#2a2a33;
   --text:#f4f4f5; --muted:#9d9da8; --faint:#6b6b76;
-  --brand:#2dd4bf; --brand2:#5eead4; --brand-dim:rgba(45,212,191,.14);
+  --glass:rgba(255,255,255,.05); --glass2:rgba(255,255,255,.015); --glass-border:rgba(255,255,255,.09); --glass-border2:rgba(255,255,255,.16); --nav-bg:rgba(0,0,0,.05); --nav-bg2:rgba(0,0,0,.12);
+  --brand:#2dd4bf; --brand2:#5eead4; --sky:#38bdf8; --brand-dim:rgba(45,212,191,.14);
   --green:#4ade80; --err:#f87171;
-  --mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;
-  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --sans:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --display:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+[data-theme="light"]{
+  --bg:#f6f6f4; --bg2:#eeece8; --panel:#ffffff; --panel2:#faf9f7;
+  --border:#e2e0dc; --border2:#d2cfc9;
+  --text:#18181b; --muted:#5c5c64; --faint:#8e8e97;
+  --glass:rgba(255,255,255,.6); --glass2:rgba(255,255,255,.25); --glass-border:rgba(24,24,27,.09); --glass-border2:rgba(24,24,27,.18); --nav-bg:rgba(0,0,0,.05); --nav-bg2:rgba(0,0,0,.12);
+  --brand:#0d9488; --brand2:#0f766e; --sky:#0284c7; --brand-dim:rgba(13,148,136,.1);
+  --green:#16a34a; --err:#dc2626;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+html{scroll-behavior:smooth;transition:background .35s ease}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;transition:background .35s ease,color .35s ease}
 ::selection{background:rgba(45,212,191,.28)}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
 .mono{font-family:var(--mono)}
 
 /* ── ambient background ─────────────────────── */
-.ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
-.ambient::before{content:"";position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
-  background-size:56px 56px;
-  -webkit-mask-image:radial-gradient(ellipse 90% 55% at 50% 0%,#000 45%,transparent 78%);
-          mask-image:radial-gradient(ellipse 90% 55% at 50% 0%,#000 45%,transparent 78%)}
-.orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.5;will-change:transform}
-.orb.a{width:560px;height:560px;left:50%;top:-280px;margin-left:-280px;background:radial-gradient(circle,rgba(45,212,191,.32),transparent 65%);animation:drift 14s ease-in-out infinite alternate}
-.orb.b{width:420px;height:420px;left:12%;top:32%;background:radial-gradient(circle,rgba(94,234,212,.10),transparent 65%);animation:drift 18s ease-in-out infinite alternate-reverse}
-.orb.c{width:380px;height:380px;right:8%;top:22%;background:radial-gradient(circle,rgba(56,189,248,.09),transparent 65%);animation:drift 22s ease-in-out infinite alternate}
-@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(40px,50px,0) scale(1.12)}}
+.ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg);transition:background .35s ease}
+/* soft color washes — pure gradients, no filters (avoids compositing glitches) */
+.orb{position:absolute;border-radius:50%;will-change:transform;opacity:.9}
+[data-theme="light"] .orb{opacity:.55}
+.orb.a{width:1200px;height:900px;left:50%;top:-380px;margin-left:-600px;background:radial-gradient(closest-side at 50% 30%,rgba(45,212,191,.17),rgba(45,212,191,.05) 55%,transparent 78%);animation:drift 16s ease-in-out infinite alternate}
+.orb.b{width:900px;height:900px;left:-260px;top:26%;background:radial-gradient(closest-side,rgba(94,234,212,.07),transparent 72%);animation:drift 21s ease-in-out infinite alternate-reverse}
+.orb.c{width:900px;height:900px;right:-240px;top:18%;background:radial-gradient(closest-side,rgba(56,189,248,.07),transparent 72%);animation:drift 25s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(60px,60px,0) scale(1.06)}}
 @media (prefers-reduced-motion:reduce){.orb{animation:none}}
+/* film-grain only — same speckle as the login page */
+.ambient::after{content:"";position:absolute;inset:0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.22' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23c)' opacity='0.55'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size:180px 180px,140px 140px;opacity:.11;mix-blend-mode:overlay}
+[data-theme="light"] .ambient::after{opacity:.5;mix-blend-mode:multiply}
 
 /* ── nav ────────────────────────────────────── */
-nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(9,9,11,.72);border-bottom:1px solid transparent;transition:border-color .3s}
-nav.scrolled{border-bottom-color:var(--border)}
-.nav-inner{display:flex;align-items:center;gap:28px;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.brand img{width:30px;height:auto;display:block;filter:drop-shadow(0 0 8px rgba(45,212,191,.45))}
-.nav-links{display:flex;gap:24px;margin-left:12px}
-.nav-links a{color:var(--muted);font-size:14px;transition:color .2s}
+nav{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--nav-bg);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid var(--glass-border);transition:border-color .3s,background .3s}
+nav.scrolled{background:var(--nav-bg2);border-bottom-color:var(--glass-border2)}
+.nav-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font:700 17px var(--display);letter-spacing:-.01em}
+.brand img{width:30px;height:auto;display:block;filter:drop-shadow(0 0 8px rgba(45,212,191,.35))}
+[data-theme="light"] .brand img{filter:none}
+.nav-links{display:flex;gap:28px;justify-content:center}
+.nav-links a{position:relative;color:var(--muted);font-size:14px;transition:color .2s}
+.nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:-4px;height:1.5px;border-radius:2px;background:linear-gradient(90deg,var(--brand2),var(--brand));transition:right .25s ease}
 .nav-links a:hover{color:var(--text)}
-.nav-cta{margin-left:auto;display:flex;gap:10px;align-items:center}
+.nav-links a:hover::after{right:0}
+.nav-cta{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.nav-cta .btn-box{margin-left:6px}
+.nav-icon{width:38px;height:38px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;transition:color .2s,background .2s,transform .18s;flex:none;text-decoration:none}
+.nav-icon:hover{color:var(--text);background:var(--glass)}
+.nav-icon:active{transform:scale(.96)}
+.nav-icon .gl{font:600 13px var(--mono);letter-spacing:-.05em}
+.theme-toggle svg{width:18px;height:18px}
+.theme-toggle .sun{display:none}
+[data-theme="light"] .theme-toggle .sun{display:block}
+[data-theme="light"] .theme-toggle .moon{display:none}
+@media (max-width:600px){.theme-toggle{display:none}.nav-icon{display:none}}
 @media (max-width:760px){.nav-links{display:none}}
+@media (max-width:600px){.nav-cta .btn-ghost{display:none}.nav-inner{gap:12px}}
 
 /* ── buttons ────────────────────────────────── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .2s;white-space:nowrap}
-.btn-primary{background:var(--brand);color:#04211d;box-shadow:0 0 0 0 rgba(45,212,191,.35),0 1px 2px rgba(0,0,0,.5)}
-.btn-primary:hover{background:var(--brand2);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(45,212,191,.16),0 6px 18px rgba(45,212,191,.22)}
-.btn-primary:active{transform:translateY(0)}
-.btn-ghost{border-color:var(--border2);color:var(--text);background:transparent}
-.btn-ghost:hover{border-color:#3a3a46;background:rgba(255,255,255,.04)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 19px;border-radius:11px;font-size:14px;font-weight:600;letter-spacing:.01em;cursor:pointer;border:1px solid transparent;transition:transform .18s,box-shadow .25s,border-color .2s,background .2s,color .2s;white-space:nowrap;overflow:hidden}
+.btn-box{background:linear-gradient(180deg,#fafafa,#e4e4e7);color:#0b0b0e;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35)}
+[data-theme="light"] .btn-box{background:linear-gradient(180deg,#18181b,#2d2d33);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 1px 2px rgba(24,24,27,.3),0 8px 24px rgba(24,24,27,.22)}
+.btn-box:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.4),0 0 0 3px rgba(45,212,191,.16),0 0 20px rgba(45,212,191,.18)}
+/* cursor spotlight: only the text under the pointer colorizes */
+.btn .t{transition:color .16s ease;border-radius:4px}
+.btn-box:hover .t.hot,.btn-primary:hover .t.hot{color:#0d9488;background:radial-gradient(closest-side,rgba(45,212,191,.14),transparent)}
+[data-theme="light"] .btn-box:hover .t.hot,[data-theme="light"] .btn-primary:hover .t.hot{color:#2dd4bf}
+.btn-box:active{transform:translateY(0)}
+/* feature-tile hover: cursor-tracked teal glow on every button */
+.btn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(150px circle at var(--mx,50%) var(--my,50%),rgba(94,234,212,.28),transparent 70%);mix-blend-mode:screen;z-index:0}
+.btn-box:hover::before,.btn-primary:hover::before{opacity:0}
+.btn:hover::before{opacity:1}
+.btn-plain{background:transparent;border-color:transparent;color:var(--text)}
+.btn-plain:hover{color:var(--text)}
+[data-theme="dark"] .btn-plain:hover{color:#fff}
+.btn-plain .arr{display:inline-block;transition:transform .2s}
+.btn-plain:hover .arr{transform:translateX(3px)}
+.btn-ghost{border-color:var(--border2);color:var(--text);background:var(--glass2);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.btn-ghost:hover{border-color:var(--glass-border2);background:var(--glass);transform:translateY(-1px)}
 .btn-lg{height:48px;padding:0 26px;font-size:15px;border-radius:12px}
 
 /* ── hero ───────────────────────────────────── */
 .hero{position:relative;padding:158px 0 84px;text-align:center}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:999px;border:1px solid var(--border2);background:rgba(16,16,20,.8);font-size:13px;color:var(--muted);animation:fadeUp .7s .05s both}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:999px;border:1px solid var(--border2);background:var(--glass);font-size:13px;color:var(--muted);animation:fadeUp .7s .05s both}
 .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px rgba(45,212,191,.18);animation:pulse 2.2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(45,212,191,.18)}50%{box-shadow:0 0 0 6px rgba(45,212,191,.05)}}
-h1{margin:26px auto 0;font-size:clamp(40px,7vw,74px);line-height:1.04;letter-spacing:-.035em;font-weight:800;max-width:15ch;animation:fadeUp .7s .12s both}
-h1 .grad{background:linear-gradient(92deg,var(--brand2) 8%,var(--brand) 48%,#38bdf8 92%);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{margin:26px auto 0;font:700 clamp(40px,7vw,74px)/1.04 var(--display);letter-spacing:-.035em;max-width:15ch;animation:fadeUp .7s .12s both}
+h1 .grad{background:linear-gradient(92deg,var(--brand2) 8%,var(--brand) 48%,var(--sky) 92%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sub{margin:22px auto 0;max-width:620px;color:var(--muted);font-size:17px;line-height:1.65;animation:fadeUp .7s .2s both}
 .sub strong{color:var(--text);font-weight:600}
 .hero-cta{margin-top:36px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .28s both}
@@ -75,7 +121,8 @@ h1 .grad{background:linear-gradient(92deg,var(--brand2) 8%,var(--brand) 48%,#38b
 
 /* ── terminal demo ──────────────────────────── */
 .demo{margin:64px auto 0;max-width:860px;animation:fadeUp .8s .4s both}
-.terminal{border:1px solid var(--border2);border-radius:16px;background:linear-gradient(180deg,#101015,#0b0b0e);box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(45,212,191,.05),0 0 60px rgba(45,212,191,.05);overflow:hidden;text-align:left}
+.terminal{border:1px solid var(--glass-border);border-radius:18px;background:linear-gradient(180deg,rgba(17,17,22,.72),rgba(11,11,15,.82));backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);box-shadow:inset 0 1px 0 var(--glass),0 30px 80px rgba(0,0,0,.55),0 0 80px rgba(45,212,191,.05);overflow:hidden;text-align:left}
+[data-theme="light"] .terminal{background:linear-gradient(180deg,#1d1e22,#17181b);border-color:rgba(24,24,27,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px rgba(24,24,27,.25)}
 .terminal-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
 .tb-dot{width:11px;height:11px;border-radius:50%}
 .tb-dot:nth-child(1){background:#ff5f57}.tb-dot:nth-child(2){background:#febc2e}.tb-dot:nth-child(3){background:#28c840}
@@ -95,7 +142,7 @@ h1 .grad{background:linear-gradient(92deg,var(--brand2) 8%,var(--brand) 48%,#38b
 section{padding:92px 0}
 .sec-head{max-width:640px;margin:0 auto 52px;text-align:center}
 .eyebrow{font:600 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--brand)}
-.sec-head h2{margin:14px 0 0;font-size:clamp(28px,4vw,40px);letter-spacing:-.025em;font-weight:750;line-height:1.15}
+.sec-head h2{margin:14px 0 0;font:700 clamp(28px,4vw,40px)/1.15 var(--display);letter-spacing:-.025em}
 .sec-head p{margin:14px 0 0;color:var(--muted);font-size:16px}
 
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
@@ -105,36 +152,49 @@ section{padding:92px 0}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:920px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:620px){.grid{grid-template-columns:1fr}}
-.card{position:relative;border:1px solid var(--border);border-radius:16px;padding:26px 24px;background:linear-gradient(180deg,var(--panel),#0c0c10);overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card{position:relative;border:1px solid var(--glass-border);border-radius:18px;padding:26px 24px;background:linear-gradient(165deg,var(--glass),var(--glass2) 45%);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 var(--glass),0 16px 40px rgba(0,0,0,.35);overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s}
 .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(45,212,191,.09),transparent 45%)}
-.card:hover{transform:translateY(-3px);border-color:#2e2e3a;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.card:hover{transform:translateY(-3px);border-color:var(--glass-border2);box-shadow:inset 0 1px 0 var(--glass-border),0 22px 50px rgba(0,0,0,.5),0 0 40px rgba(45,212,191,.06)}
+[data-theme="light"] .card{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 12px 32px rgba(24,24,27,.07)}
+[data-theme="light"] .card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 18px 42px rgba(24,24,27,.12)}
 .card:hover::after{opacity:1}
 .card .icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--brand-dim);color:var(--brand);margin-bottom:16px}
-.card h3{margin:0 0 8px;font-size:16px;font-weight:650}
+.card h3{margin:0 0 8px;font:600 16px var(--display);letter-spacing:-.01em}
 .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
 
 /* ── code blocks ────────────────────────────── */
-.codecard{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0b0b0e;margin-top:20px}
+.codecard{border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;background:rgba(13,13,18,.66);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 var(--glass-border),0 14px 36px rgba(0,0,0,.35);margin-top:20px}
+[data-theme="light"] .codecard{background:#1d1e22;border-color:rgba(24,24,27,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 36px rgba(24,24,27,.18)}
 .codecard-bar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--faint);font:12px var(--mono)}
 .codecard pre{margin:0;padding:18px 20px;overflow-x:auto;font:13px/1.7 var(--mono);color:#c9c9d1}
 .tok-k{color:#7dd3fc}.tok-s{color:#a5f3d0}.tok-m{color:var(--faint)}
 
 /* ── quickstart ─────────────────────────────── */
-.qs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-@media (max-width:860px){.qs-grid{grid-template-columns:1fr}}
-.qs-steps{display:flex;flex-direction:column;gap:14px}
-.qs-step{display:flex;gap:14px;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--panel);transition:border-color .2s}
-.qs-step:hover{border-color:#2e2e3a}
+/* quickstart — one row per step, step card + code card side by side */
+.qs-grid{display:flex;flex-direction:column;gap:14px;max-width:920px;margin:0 auto}
+.qs-row{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:stretch}
+.qs-row .qs-step{height:100%}
+.qs-row .qs-step>div:last-child{align-self:center}
+.qs-row .codecard{margin-top:0}
+.qs-row .codecard pre{font-size:12.5px}
+@media (max-width:860px){.qs-row{grid-template-columns:1fr}}
+.qs-step{display:flex;gap:14px;padding:16px 18px;border:1px solid var(--glass-border);border-radius:16px;background:linear-gradient(165deg,var(--glass),var(--glass2) 45%);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 var(--glass),0 10px 26px rgba(0,0,0,.28);transition:border-color .2s}
+.qs-step:hover{border-color:var(--glass-border2)}
+[data-theme="light"] .qs-step{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 22px rgba(24,24,27,.06)}
 .qs-num{flex:none;width:26px;height:26px;border-radius:8px;background:var(--brand-dim);color:var(--brand);display:flex;align-items:center;justify-content:center;font:600 13px var(--mono);margin-top:2px}
 .qs-step h4{margin:0 0 3px;font-size:14.5px;font-weight:650}
 .qs-step p{margin:0;color:var(--muted);font-size:13.5px}
 .qs-step code{font:12.5px var(--mono);background:#0b0b0e;border:1px solid var(--border);border-radius:6px;padding:1px 6px;color:var(--brand2)}
 
 /* ── CTA band ───────────────────────────────── */
-.cta{border:1px solid var(--border2);border-radius:24px;padding:64px 40px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(180deg,#101016,#0a0a0d)}
-.cta::before{content:"";position:absolute;inset:-1px;background:radial-gradient(600px 200px at 50% 0%,rgba(45,212,191,.13),transparent 70%);pointer-events:none}
-.cta h2{margin:0;font-size:clamp(26px,4vw,38px);letter-spacing:-.025em;position:relative}
-.cta p{color:var(--muted);margin:14px 0 30px;position:relative}
+.cta{border:1px solid var(--glass-border2);border-radius:26px;padding:60px 40px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(180deg,var(--glass),var(--glass2) 55%);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);box-shadow:inset 0 1px 0 var(--glass),0 30px 70px rgba(0,0,0,.45)}
+[data-theme="light"] .cta{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 30px 70px rgba(24,24,27,.12)}
+.cta::before{content:"";position:absolute;top:0;left:18%;right:18%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent)}
+.cta::after{content:"";position:absolute;inset:0;background:radial-gradient(620px 200px at 50% -60px,rgba(255,255,255,.055),transparent 70%);pointer-events:none}
+.cta h2{margin:0;font:700 clamp(26px,4vw,38px)/1.15 var(--display);letter-spacing:-.025em;position:relative}
+.cta p{color:var(--muted);margin:14px 0 0;position:relative}
+.cta-actions{margin-top:34px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
+.cta-note{margin-top:18px;font:12.5px var(--mono);color:var(--faint);letter-spacing:.04em;position:relative}
 
 /* ── footer ─────────────────────────────────── */
 footer{border-top:1px solid var(--border);padding:36px 0 48px;color:var(--faint);font-size:13.5px}
@@ -151,15 +211,19 @@ footer{border-top:1px solid var(--border);padding:36px 0 48px;color:var(--faint)
 
 <nav id="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="/"><img src="/logo.svg" alt="Sparrow logo">Sparrow</a>
+    <a class="brand" href="/"><img src="/logo-gradient.svg" alt="Sparrow logo">Sparrow</a>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#quickstart">Quickstart</a>
       <a href="/dashboard">Console</a>
     </div>
     <div class="nav-cta">
-      <a class="btn btn-ghost" href="/login">Sign in</a>
-      <a class="btn btn-primary" href="/signup">Start free</a>
+      <a class="nav-icon theme-toggle" id="themeToggle" role="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </a>
+      <a class="nav-icon" href="https://github.com/shauryapariharxr/Sparrow" target="_blank" rel="noopener noreferrer" aria-label="Source on GitHub" title="Source on GitHub"><span class="gl">&lt;/&gt;</span></a>
+      <a class="btn btn-box" href="/signup">Sign up</a>
     </div>
   </div>
 </nav>
@@ -170,8 +234,8 @@ footer{border-top:1px solid var(--border);padding:36px 0 48px;color:var(--faint)
     <h1>Serverless data,<br><span class="grad">one fetch away.</span></h1>
     <p class="sub">Sparrow is a <strong>Redis-compatible data platform</strong> you call over REST. No client library, no connection pool, no driver — a single <strong>fetch()</strong> works from serverless, edge and browser.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg" href="/signup">Create free database</a>
-      <a class="btn btn-ghost btn-lg" href="#quickstart">curl in 30s &rarr;</a>
+      <a class="btn btn-box btn-lg" href="/signup">Create free database</a>
+      <a class="btn btn-ghost btn-lg" href="https://github.com/shauryapariharxr/Sparrow" target="_blank" rel="noopener noreferrer">View source</a>
     </div>
     <div class="hero-note">Free tier &middot; no credit card &middot; per-tenant isolation &middot; TTL &amp; persistence built in</div>
 
@@ -209,34 +273,43 @@ footer{border-top:1px solid var(--border);padding:36px 0 48px;color:var(--faint)
       <h2>From zero to data in three calls.</h2>
     </div>
     <div class="qs-grid">
-      <div class="qs-steps reveal">
+      <div class="qs-row reveal">
         <div class="qs-step"><div class="qs-num">1</div><div><h4>Create a database</h4><p>Sign up and click <strong>Create database</strong> in the <a href="/dashboard" style="color:var(--brand2)">console</a>.</p></div></div>
-        <div class="qs-step"><div class="qs-num">2</div><div><h4>Mint a token</h4><p>Tokens look like <code>sparrow_…</code>, are shown once, and can be read-only.</p></div></div>
-        <div class="qs-step"><div class="qs-num">3</div><div><h4>Call commands</h4><p>Path style for curl, JSON arrays for code — both hit the same engine.</p></div></div>
+        <div class="codecard">
+          <div class="codecard-bar">dashboard</div>
+          <pre><span class="tok-m"># → New database created</span>
+<span class="tok-m">#   id:    db_a1b2c3</span>
+<span class="tok-m">#   endpoint: https://your-host</span></pre>
+        </div>
       </div>
-      <div class="reveal">
+      <div class="qs-row reveal">
+        <div class="qs-step"><div class="qs-num">2</div><div><h4>Mint a token</h4><p>Tokens look like <code>sparrow_…</code>, are shown once, and can be read-only.</p></div></div>
+        <div class="codecard">
+          <div class="codecard-bar">tokens</div>
+          <pre><span class="tok-m"># → Token created (copy it now — shown only once)</span>
+<span class="tok-m">#   sparrow_xK9mPq…  <span class="tok-k">read-write</span></span></pre>
+        </div>
+      </div>
+      <div class="qs-row reveal">
+        <div class="qs-step"><div class="qs-num">3</div><div><h4>Call commands</h4><p>Path style for curl, JSON arrays for code — both hit the same engine.</p></div></div>
         <div class="codecard">
           <div class="codecard-bar">curl</div>
           <pre><span class="tok-m"># set</span>
 curl -X POST https://your-host/set/greeting/hello \
   -H <span class="tok-s">"Authorization: Bearer sparrow_…"</span>
-
-<span class="tok-m"># get</span>
-curl -X POST https://your-host/get/greeting \
-  -H <span class="tok-s">"Authorization: Bearer sparrow_…"</span>
-<span class="tok-m"># → {"result":"hello"}</span></pre>
+<span class="tok-m"># → {"result":"OK"}</span></pre>
         </div>
+      </div>
+      <div class="qs-row reveal">
+        <div class="qs-step"><div class="qs-num">4</div><div><h4>From any runtime</h4><p>A single <code>fetch()</code> from Node, edge, or the browser — no driver.</p></div></div>
         <div class="codecard">
           <div class="codecard-bar">any runtime</div>
           <pre><span class="tok-k">const</span> r = <span class="tok-k">await</span> fetch(<span class="tok-s">"https://your-host"</span>, {
   method: <span class="tok-s">"POST"</span>,
-  headers: {
-    Authorization: <span class="tok-s">"Bearer sparrow_…"</span>,
-    <span class="tok-s">"Content-Type"</span>: <span class="tok-s">"application/json"</span>,
-  },
-  body: JSON.stringify([<span class="tok-s">"SET"</span>, <span class="tok-s">"user:42"</span>, <span class="tok-s">"ηma"</span>]),
+  headers: { Authorization: <span class="tok-s">"Bearer sparrow_…"</span> },
+  body: JSON.stringify([<span class="tok-s">"GET"</span>, <span class="tok-s">"greeting"</span>]),
 });
-<span class="tok-k">const</span> { result } = <span class="tok-k">await</span> r.json();</pre>
+<span class="tok-k">const</span> { result } = <span class="tok-k">await</span> r.json(); <span class="tok-m">// "hello"</span></pre>
         </div>
       </div>
     </div>
@@ -246,16 +319,20 @@ curl -X POST https://your-host/get/greeting \
 <section>
   <div class="wrap">
     <div class="cta reveal">
+      <div class="eyebrow">Get started</div>
       <h2>Your data is one fetch away.</h2>
-      <p>Create a database, mint a token, ship something today.</p>
-      <a class="btn btn-primary btn-lg" href="/signup">Get started free</a>
+      <p>Create a database, mint a token, and make your first call in under a minute. Free tier, no credit card.</p>
+      <div class="cta-actions">
+        <a class="btn btn-box btn-lg" href="/signup">Create free database</a>
+        <a class="btn btn-plain btn-lg" href="/dashboard">Open console <span class="arr">&rarr;</span></a>
+      </div>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap foot">
-    <span class="brand"><img src="/logo.svg" alt="">Sparrow</span>
+    <span class="brand"><img src="/logo-gradient.svg" alt="">Sparrow</span>
     <span>— Redis over REST</span>
     <div class="foot-right">
       <a href="/dashboard">Console</a>
@@ -267,6 +344,13 @@ curl -X POST https://your-host/get/greeting \
 
 <script>
 (function(){
+  var root=document.documentElement;
+  var t=document.getElementById('themeToggle');
+  if(t)t.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='light'?'dark':'light';
+    root.setAttribute('data-theme',next);try{localStorage.setItem('sparrow-theme',next)}catch(e){}
+  });
+
   var nav=document.getElementById('nav');
   var onScroll=function(){nav.classList.toggle('scrolled',window.scrollY>8)};
   window.addEventListener('scroll',onScroll,{passive:true});onScroll();
@@ -274,13 +358,36 @@ curl -X POST https://your-host/get/greeting \
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
   document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
 
-  document.querySelectorAll('.card').forEach(function(c){
+  document.querySelectorAll('.card,.qs-step,.btn').forEach(function(c){
     c.addEventListener('pointermove',function(ev){
       var r=c.getBoundingClientRect();
       c.style.setProperty('--mx',(ev.clientX-r.left)+'px');
       c.style.setProperty('--my',(ev.clientY-r.top)+'px');
+      if(c.classList&&c.classList.contains('btn'))spotText(c,ev);
     });
   });
+
+  /* wrap button words so hover can colorize just the word under the cursor */
+  function spotWrap(btn){
+    if(btn.dataset.spotted)return;
+    var walk=document.createTreeWalker(btn,NodeFilter.SHOW_TEXT,null);
+    var nodes=[];while(walk.nextNode())nodes.push(walk.currentNode);
+    nodes.forEach(function(n){
+      if(!n.nodeValue.trim())return;
+      var s=document.createElement('span');s.className='t';s.textContent=n.nodeValue;
+      n.parentNode.replaceChild(s,n);
+    });
+    btn.dataset.spotted='1';
+  }
+  function spotText(btn,ev){
+    spotWrap(btn);
+    btn.querySelectorAll('.t').forEach(function(s){
+      var r=s.getBoundingClientRect();
+      var dx=ev.clientX-(r.left+r.width/2),dy=ev.clientY-(r.top+r.height/2);
+      s.classList.toggle('hot',Math.abs(dx)<r.width/2+26&&Math.abs(dy)<26);
+    });
+  }
+  document.querySelectorAll('.btn').forEach(spotWrap);
 
   /* typewriter demo */
   var body=document.getElementById('demo');

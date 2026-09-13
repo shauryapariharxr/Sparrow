@@ -155,7 +155,7 @@ Response conventions: success → `{"result": ...}`, error → `{"error":"..."}`
 
 ## Configuration
 
-Every knob has a default; see `.env.example`. Key ones:
+Every knob has a default; see `.env.example`. Copy it to `.env.local` (git-ignored) to configure locally — it is loaded automatically at startup, and real environment variables always win over file values. Key ones:
 
 | Variable | Default | Meaning |
 |---|---|---|
