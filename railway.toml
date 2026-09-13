@@ -1,0 +1,20 @@
+# Railway config — used by `railway up` (CLI) and dashboard deploys.
+# Volume: attach a persistent volume mounted at /data in the Railway dashboard
+# (Service → Volumes → "New Volume", mount path /data), then set the env vars below.
+
+[image]
+builder = "DOCKERFILE"
+dockerfilePath = "deploy/Dockerfile"
+
+[deploy]
+startCommand = "node src/index.js"
+healthcheckPath = "/healthz"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+numReplicas = 1   # must stay 1: the in-memory engine + SQLite are single-writer
+
+[variables]
+REDEX_DATA_DIR = "/data/engine"
+REDEX_SQLITE_PATH = "/data/control.db"
+REDEX_RESP_PORT = "0"

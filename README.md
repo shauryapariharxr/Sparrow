@@ -226,6 +226,12 @@ docker build -t sparrow -f deploy/Dockerfile .
 docker run -d -p 127.0.0.1:8080:8080 -v sparrow-data:/data \
   -e REDEX_DATA_DIR=/data/engine -e REDEX_SQLITE_PATH=/data/control.db \
   -e REDEX_RESP_PORT=0 --restart unless-stopped sparrow
+
+# Railway (uses railway.json + railway.toml, deploys deploy/Dockerfile)
+npm i -g @railway/cli && railway login
+railway init && railway up
+# then in the dashboard: attach a Volume mounted at /data and add a public domain
+# (railway.toml already sets REDEX_DATA_DIR/REDEX_SQLITE_PATH to /data/… and REDEX_RESP_PORT=0)
 ```
 
 Production checklist: HTTPS only (Caddy terminates TLS), `REDEX_RESP_PORT=0`, and back up the data directory (`REDEX_DATA_DIR` + `REDEX_SQLITE_PATH`) — it holds the control-plane DB and all tenant data.
