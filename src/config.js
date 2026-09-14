@@ -52,8 +52,11 @@ const bool = (name, def) => {
 };
 
 const config = {
-  host: process.env.REDEX_HOST || process.env.SPARROW_HOST || '127.0.0.1',
-  port: int('REDEX_PORT', int('SPARROW_PORT', 8080)),
+  // PaaS platforms (Render/Railway/Fly) route traffic to 0.0.0.0 and inject
+  // PORT; defaulting to that when PORT exists keeps them working with zero
+  // dashboard config. Local dev and the systemd unit still default to loopback.
+  host: process.env.REDEX_HOST || process.env.SPARROW_HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1'),
+  port: int('REDEX_PORT', int('SPARROW_PORT', int('PORT', 8080))),
 
   sqlitePath: process.env.REDEX_SQLITE_PATH || path.join(root, 'data', 'control.db'),
 
