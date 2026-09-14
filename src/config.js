@@ -51,11 +51,29 @@ const bool = (name, def) => {
   return v !== '0' && v.toLowerCase() !== 'false' && v !== 'no';
 };
 
+// PaaS platforms route traffic to 0.0.0.0; binding loopback there makes the
+// service unreachable (Render: "no open ports detected on 0.0.0.0").
+// Signals: Render injects RENDER=true, most PaaS inject PORT. Explicit
+// REDEX_HOST still wins — UNLESS it's a loopback address on a PaaS, which is
+// always a mispaste (e.g. copying .env.example into the dashboard); we
+// override it with a warning instead of shipping a dead deployment.
+const onPaaS = !!(process.env.RENDER || process.env.PORT);
+const loopback = new Set(['127.0.0.1', 'localhost', '::1']);
+const explicitHost = process.env.REDEX_HOST || process.env.SPARROW_HOST;
+const hostLoopbackOnPaaS = onPaaS && explicitHost && loopback.has(explicitHost);
+if (hostLoopbackOnPaaS) {
+  console.warn(
+    `[sparrow] REDEX_HOST=${explicitHost} is loopback but a PaaS environment was detected` +
+    ` (RENDER/PORT set) — binding 0.0.0.0 instead. Remove REDEX_HOST from your` +
+    ` dashboard env vars to silence this warning.`
+  );
+}
+
 const config = {
-  // PaaS platforms (Render/Railway/Fly) route traffic to 0.0.0.0 and inject
-  // PORT; defaulting to that when PORT exists keeps them working with zero
-  // dashboard config. Local dev and the systemd unit still default to loopback.
-  host: process.env.REDEX_HOST || process.env.SPARROW_HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1'),
+  onPaaS,
+  host: hostLoopbackOnPaaS
+    ? '0.0.0.0'
+    : (explicitHost || (onPaaS ? '0.0.0.0' : '127.0.0.1')),
   port: int('REDEX_PORT', int('SPARROW_PORT', int('PORT', 8080))),
 
   sqlitePath: process.env.REDEX_SQLITE_PATH || path.join(root, 'data', 'control.db'),
