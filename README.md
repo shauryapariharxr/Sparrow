@@ -212,30 +212,6 @@ npm test                  # 46 tests: engine semantics, persistence, gateway + w
 node scripts/e2e-live.js  # against a running server (BASE=http://127.0.0.1:8080)
 ```
 
-## Deploy
-
-Single process, zero dependencies — any host with Node.js ≥ 22.5 works. Full guide in **[`deploy/DEPLOY.md`](deploy/DEPLOY.md)**. Quick paths:
-
-```bash
-# VPS (recommended): systemd + Caddy with automatic HTTPS
-cp deploy/sparrow.service /etc/systemd/system/ && sudo systemctl enable --now sparrow
-sudo cp deploy/Caddyfile /etc/caddy/Caddyfile   # set your domain, reload caddy
-
-# Docker
-docker build -t sparrow -f deploy/Dockerfile .
-docker run -d -p 127.0.0.1:8080:8080 -v sparrow-data:/data \
-  -e REDEX_DATA_DIR=/data/engine -e REDEX_SQLITE_PATH=/data/control.db \
-  -e REDEX_RESP_PORT=0 --restart unless-stopped sparrow
-
-# Railway (uses railway.json + railway.toml, deploys deploy/Dockerfile)
-npm i -g @railway/cli && railway login
-railway init && railway up
-# then in the dashboard: attach a Volume mounted at /data and add a public domain
-# (railway.toml already sets REDEX_DATA_DIR/REDEX_SQLITE_PATH to /data/… and REDEX_RESP_PORT=0)
-```
-
-Production checklist: HTTPS only (Caddy terminates TLS), `REDEX_RESP_PORT=0`, and back up the data directory (`REDEX_DATA_DIR` + `REDEX_SQLITE_PATH`) — it holds the control-plane DB and all tenant data.
-
 ## Roadmap beyond v1
 
 Per the design's non-goals, deliberately out of scope for now: native TCP for external users, multi-region replication, horizontal sharding, billing. Natural next steps: WebSocket subscribe, Lua scripting (`EVAL`), sorted-set `ZUNION`/`ZINTER` (non-store), stream type, per-tenant engine processes for hard isolation at higher tiers.
