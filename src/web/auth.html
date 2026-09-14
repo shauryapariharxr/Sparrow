@@ -100,25 +100,41 @@ input:focus{border-color:var(--brand);background:rgba(10,10,13,.8);box-shadow:0 
 .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;background:transparent;color:#55555f;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:color .15s,background .15s}
 .eye:hover{color:var(--muted);background:rgba(255,255,255,.05)}
 
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:47px;padding:0 20px;border-radius:999px;font:600 14.5px var(--sans);cursor:pointer;border:1px solid transparent;transition:transform .18s,box-shadow .25s,opacity .2s,border-color .2s,background .2s,color .2s;overflow:hidden;white-space:nowrap}
-.btn-primary{background:linear-gradient(180deg,#fafafa,#e4e4e7);color:#0b0b0e;
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:47px;padding:0 20px;border-radius:999px;font:600 14.5px var(--sans);cursor:pointer;border:1px solid transparent;transition:transform .18s,box-shadow .25s,opacity .2s,border-color .2s,background .45s ease,color .2s;overflow:hidden;white-space:nowrap}
+.btn-primary{background:#fafafa;color:#0b0b0e;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.4)}
-[data-theme="light"] .btn-primary{background:linear-gradient(180deg,#18181b,#2d2d33);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 1px 2px rgba(24,24,27,.3),0 10px 30px rgba(24,24,27,.25)}
+[data-theme="light"] .btn-primary{background:#18181b;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 1px 2px rgba(24,24,27,.3),0 10px 30px rgba(24,24,27,.25)}
 .btn-primary:hover{transform:translateY(-1px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.45),0 0 0 3px rgba(45,212,191,.16),0 0 20px rgba(45,212,191,.18)}
+  box-shadow:0 2px 4px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.45);background:#0b0b0e;transition:transform .18s,box-shadow .25s,opacity .2s,border-color .2s,color .25s ease .35s,background .55s ease .15s}
+[data-theme="light"] .btn-primary:hover{background:#fff}
+/* gooey fill: dark theme = ink blobs rise (white btn → ink, text whitens); light theme = white blobs drop (ink btn → white, text darkens) */
+.btn .goo{position:absolute;inset:0;z-index:1;pointer-events:none;filter:url(#sparrow-goo);border-radius:inherit;overflow:hidden}
+.btn .goo div{position:absolute;bottom:0;width:34%;height:100%;background:#0b0b0e;border-radius:100%;transform:scale(1.4) translateY(125%) translateZ(0);transition:transform .7s ease}
+.btn .goo div:nth-child(1){left:-5%}
+.btn .goo div:nth-child(2){left:30%;transition-delay:60ms}
+.btn .goo div:nth-child(3){left:66%;transition-delay:25ms}
+[data-theme="light"] .btn .goo div{top:0;bottom:auto;background:#fff;transform:scale(1.4) translateY(-125%) translateZ(0)}
+.btn-primary:hover .goo div{transform:scale(1.4) translateY(0) translateZ(0)}
+.btn-primary:hover .t{color:#fff}
+[data-theme="light"] .btn-primary:hover .t{color:#18181b}
+@media (prefers-reduced-motion:reduce){.btn .goo div{transition:none}}
 /* cursor spotlight on button text */
-.btn .t{transition:color .16s ease;border-radius:4px}
-.btn-primary:hover .t.hot{color:#0d9488;background:radial-gradient(closest-side,rgba(45,212,191,.14),transparent)}
-[data-theme="light"] .btn-primary:hover .t.hot{color:#2dd4bf}
+.btn .t{transition:color .25s ease;border-radius:4px;position:relative;z-index:2}
 .btn-primary:active{transform:translateY(0) scale(.99)}
 .btn-secondary{background:var(--glass);border-color:var(--border2);color:var(--text)}
-.btn-secondary:hover{border-color:var(--glass-border2);background:rgba(255,255,255,.08);transform:translateY(-1px)}
-[data-theme="light"] .btn-secondary:hover{background:rgba(24,24,27,.05)}
+.btn-secondary:hover{border-color:var(--glass-border2);background:#fff;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.45);transition:transform .18s,box-shadow .25s,opacity .2s,border-color .2s,color .25s,background .55s ease .15s}
+[data-theme="light"] .btn-secondary:hover{background:#0b0b0e}
 .btn[disabled]{opacity:.6;pointer-events:none}
-/* feature-tile hover: cursor-tracked teal glow on buttons */
-.btn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(150px circle at var(--mx,50%) var(--my,50%),rgba(94,234,212,.28),transparent 70%);mix-blend-mode:screen;z-index:0}
-.btn-box:hover::before,.btn-primary:hover::before{opacity:0}
-.btn:hover::before{opacity:1}
+/* secondary buttons: dark theme = white blobs rise (ink text); light theme = ink blobs rise (white text) */
+.btn-secondary .goo{position:absolute;inset:0;z-index:1;pointer-events:none;filter:url(#sparrow-goo);border-radius:inherit;overflow:hidden}
+.btn-secondary .goo div{position:absolute;bottom:0;width:34%;height:100%;background:#fff;border-radius:100%;transform:scale(1.4) translateY(125%) translateZ(0);transition:transform .7s ease}
+[data-theme="light"] .btn-secondary .goo div{background:#0b0b0e}
+.btn-secondary .goo div:nth-child(1){left:-5%}
+.btn-secondary .goo div:nth-child(2){left:30%;transition-delay:60ms}
+.btn-secondary .goo div:nth-child(3){left:66%;transition-delay:25ms}
+.btn-secondary:hover .goo div{transform:scale(1.4) translateY(0) translateZ(0)}
+.btn-secondary:hover .t{color:#18181b}
+[data-theme="light"] .btn-secondary:hover .t{color:#fff}
 
 .or{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--faint);font-size:12.5px}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--glass-border)}
@@ -215,6 +231,29 @@ input:focus{border-color:var(--brand);background:rgba(10,10,13,.8);box-shadow:0 
 
 <div class="foot"><a href="/">sparrow.dev</a> &nbsp;·&nbsp; <a href="/healthz">status</a></div>
 
+<script>
+/* gooey hover: inject the SVG goo filter once, then add 3 teal blobs to filled buttons */
+(function(){
+  var svgNS='http://www.w3.org/2000/svg';
+  var svg=document.createElementNS(svgNS,'svg');
+  svg.setAttribute('width','0');svg.setAttribute('height','0');
+  svg.style.position='absolute';
+  var defs=document.createElementNS(svgNS,'defs');
+  var f=document.createElementNS(svgNS,'filter');
+  f.setAttribute('id','sparrow-goo');
+  f.innerHTML='<feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>'+
+    '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11" result="goo"/>'+ 
+    '<feBlend in="SourceGraphic" in2="goo"/>';
+  defs.appendChild(f);svg.appendChild(defs);document.body.appendChild(svg);
+  function addGoo(b){
+    if(b.querySelector('.goo'))return;
+    var g=document.createElement('div');g.className='goo';
+    for(var i=0;i<3;i++)g.appendChild(document.createElement('div'));
+    b.appendChild(g);
+  }
+  document.querySelectorAll('.btn-primary,.btn-secondary').forEach(addGoo);
+})();
+</script>
 <script>
 (function(){
   var root=document.documentElement;

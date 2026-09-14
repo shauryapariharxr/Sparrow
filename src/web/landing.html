@@ -83,27 +83,46 @@ nav.scrolled{background:var(--nav-bg2);border-bottom-color:var(--glass-border2)}
 @media (max-width:600px){.nav-cta .btn-ghost{display:none}.nav-inner{gap:12px}}
 
 /* ── buttons ────────────────────────────────── */
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 19px;border-radius:11px;font-size:14px;font-weight:600;letter-spacing:.01em;cursor:pointer;border:1px solid transparent;transition:transform .18s,box-shadow .25s,border-color .2s,background .2s,color .2s;white-space:nowrap;overflow:hidden}
-.btn-box{background:linear-gradient(180deg,#fafafa,#e4e4e7);color:#0b0b0e;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35)}
-[data-theme="light"] .btn-box{background:linear-gradient(180deg,#18181b,#2d2d33);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 1px 2px rgba(24,24,27,.3),0 8px 24px rgba(24,24,27,.22)}
-.btn-box:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.4),0 0 0 3px rgba(45,212,191,.16),0 0 20px rgba(45,212,191,.18)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 19px;border-radius:50px;font-size:14px;font-weight:600;letter-spacing:.01em;cursor:pointer;border:1px solid transparent;transition:transform .18s,box-shadow .25s,border-color .2s,background .45s ease,color .2s;white-space:nowrap;overflow:hidden}
+.btn-box{background:#fafafa;color:#0b0b0e;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35)}
+[data-theme="light"] .btn-box{background:#18181b;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 1px 2px rgba(24,24,27,.3),0 8px 24px rgba(24,24,27,.22)}
+.btn-box:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.4);background:#0b0b0e;transition:transform .18s,box-shadow .25s,border-color .2s,color .25s ease .35s,background .55s ease .15s}
+[data-theme="light"] .btn-box:hover{background:#fff}
+/* gooey fill: blobs rise & merge over the fill on hover (#sparrow-goo filter injected by script)
+   dark theme: white button, ink blobs rise → fill turns ink, text whitens
+   light theme: ink button, white blobs drop from the top → fill turns white, text darkens */
+.btn .goo{position:absolute;inset:0;z-index:1;pointer-events:none;filter:url(#sparrow-goo);border-radius:inherit;overflow:hidden}
+.btn .goo div{position:absolute;bottom:0;width:34%;height:100%;background:#0b0b0e;border-radius:100%;transform:scale(1.4) translateY(125%) translateZ(0);transition:transform .7s ease}
+.btn .goo div:nth-child(1){left:-5%}
+.btn .goo div:nth-child(2){left:30%;transition-delay:60ms}
+.btn .goo div:nth-child(3){left:66%;transition-delay:25ms}
+[data-theme="light"] .btn .goo div{top:0;bottom:auto;background:#fff;transform:scale(1.4) translateY(-125%) translateZ(0)}
+.btn-box:hover .goo div,.btn-primary:hover .goo div{transform:scale(1.4) translateY(0) translateZ(0)}
+.btn-box:hover .t,.btn-primary:hover .t{color:#fff}
+[data-theme="light"] .btn-box:hover .t,[data-theme="light"] .btn-primary:hover .t{color:#18181b}
+@media (prefers-reduced-motion:reduce){.btn .goo div{transition:none}}
 /* cursor spotlight: only the text under the pointer colorizes */
-.btn .t{transition:color .16s ease;border-radius:4px}
-.btn-box:hover .t.hot,.btn-primary:hover .t.hot{color:#0d9488;background:radial-gradient(closest-side,rgba(45,212,191,.14),transparent)}
-[data-theme="light"] .btn-box:hover .t.hot,[data-theme="light"] .btn-primary:hover .t.hot{color:#2dd4bf}
+.btn .t{transition:color .25s ease;border-radius:4px;position:relative;z-index:2}
 .btn-box:active{transform:translateY(0)}
-/* feature-tile hover: cursor-tracked teal glow on every button */
-.btn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(150px circle at var(--mx,50%) var(--my,50%),rgba(94,234,212,.28),transparent 70%);mix-blend-mode:screen;z-index:0}
-.btn-box:hover::before,.btn-primary:hover::before{opacity:0}
-.btn:hover::before{opacity:1}
+/* light buttons (ghost/plain): dark theme = white blobs rise (white pill, ink text); light theme = ink blobs rise (black fill, white text) */
+.btn-ghost .goo,.btn-plain .goo{position:absolute;inset:0;z-index:1;pointer-events:none;filter:url(#sparrow-goo);border-radius:inherit;overflow:hidden}
+.btn-ghost .goo div,.btn-plain .goo div{position:absolute;bottom:0;width:34%;height:100%;background:#fff;border-radius:100%;transform:scale(1.4) translateY(125%) translateZ(0);transition:transform .7s ease}
+[data-theme="light"] .btn-ghost .goo div,[data-theme="light"] .btn-plain .goo div{background:#0b0b0e}
+.btn-ghost .goo div:nth-child(1),.btn-plain .goo div:nth-child(1){left:-5%}
+.btn-ghost .goo div:nth-child(2),.btn-plain .goo div:nth-child(2){left:30%;transition-delay:60ms}
+.btn-ghost .goo div:nth-child(3),.btn-plain .goo div:nth-child(3){left:66%;transition-delay:25ms}
+.btn-ghost:hover .goo div,.btn-plain:hover .goo div{transform:scale(1.4) translateY(0) translateZ(0)}
+.btn-ghost:hover .t,.btn-plain:hover .t{color:#18181b}
+[data-theme="light"] .btn-ghost:hover .t,[data-theme="light"] .btn-plain:hover .t{color:#fff}
 .btn-plain{background:transparent;border-color:transparent;color:var(--text)}
 .btn-plain:hover{color:var(--text)}
 [data-theme="dark"] .btn-plain:hover{color:#fff}
 .btn-plain .arr{display:inline-block;transition:transform .2s}
 .btn-plain:hover .arr{transform:translateX(3px)}
 .btn-ghost{border-color:var(--border2);color:var(--text);background:var(--glass2);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.btn-ghost:hover{border-color:var(--glass-border2);background:var(--glass);transform:translateY(-1px)}
-.btn-lg{height:48px;padding:0 26px;font-size:15px;border-radius:12px}
+.btn-ghost:hover,.btn-plain:hover{border-color:var(--glass-border2);background:#fff;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.4);transition:transform .18s,box-shadow .25s,border-color .2s,color .25s,background .55s ease .15s}
+[data-theme="light"] .btn-ghost:hover,[data-theme="light"] .btn-plain:hover{background:#0b0b0e}
+.btn-lg{height:48px;padding:0 26px;font-size:15px;border-radius:50px}
 
 /* ── hero ───────────────────────────────────── */
 .hero{position:relative;padding:158px 0 84px;text-align:center}
@@ -392,6 +411,30 @@ curl -X POST https://your-host/set/greeting/hello \
   /* typewriter demo */
   var body=document.getElementById('demo');
   var REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* gooey hover: inject the SVG goo filter once, then add 3 teal blobs to every filled button */
+  (function(){
+    var svgNS='http://www.w3.org/2000/svg';
+    var svg=document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width','0');svg.setAttribute('height','0');
+    svg.style.position='absolute';
+    var defs=document.createElementNS(svgNS,'defs');
+    var f=document.createElementNS(svgNS,'filter');
+    f.setAttribute('id','sparrow-goo');
+    f.innerHTML='<feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>'+
+      '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11" result="goo"/>'+ 
+      '<feBlend in="SourceGraphic" in2="goo"/>';
+    defs.appendChild(f);svg.appendChild(defs);document.body.appendChild(svg);
+    function addGoo(b){
+      if(b.querySelector('.goo'))return;
+      var g=document.createElement('div');g.className='goo';
+      for(var i=0;i<3;i++)g.appendChild(document.createElement('div'));
+      b.appendChild(g);
+    }
+    function init(){document.querySelectorAll('.btn-box,.btn-primary,.btn-ghost,.btn-plain').forEach(addGoo);}
+    init();
+    window.__sparrowGooInit=init;
+  })();
   var LINES=[
     {cls:'tl-dim', text:'# every command is an HTTP request', speed:12, pre:true},
     {cls:null, html:true, seq:[
