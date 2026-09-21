@@ -3,17 +3,17 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/healthz", "destination": "https://sparrow-ixbb.onrender.com/healthz" },
-    { "source": "/auth/:path*", "destination": "https://sparrow-ixbb.onrender.com/auth/:path*" },
-    { "source": "/databases/:path*", "destination": "https://sparrow-ixbb.onrender.com/databases/:path*" },
-    { "source": "/tokens/:path*", "destination": "https://sparrow-ixbb.onrender.com/tokens/:path*" },
-    { "source": "/usage/:path*", "destination": "https://sparrow-ixbb.onrender.com/usage/:path*" },
-    { "source": "/storage/:path*", "destination": "https://sparrow-ixbb.onrender.com/storage/:path*" },
-    { "source": "/subscribe/:path*", "destination": "https://sparrow-ixbb.onrender.com/subscribe/:path*" },
-    { "source": "/pipeline", "destination": "https://sparrow-ixbb.onrender.com/pipeline" },
+    { "source": "/healthz", "destination": "https://sparrow-backend-kixz.onrender.com/healthz" },
+    { "source": "/auth/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/auth/:path*" },
+    { "source": "/databases/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/databases/:path*" },
+    { "source": "/tokens/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/tokens/:path*" },
+    { "source": "/usage/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/usage/:path*" },
+    { "source": "/storage/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/storage/:path*" },
+    { "source": "/subscribe/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/subscribe/:path*" },
+    { "source": "/pipeline", "destination": "https://sparrow-backend-kixz.onrender.com/pipeline" },
     { "source": "/login", "destination": "/auth.html" },
     { "source": "/signup", "destination": "/auth.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/:cmd/:path*", "destination": "https://sparrow-ixbb.onrender.com/:cmd/:path*" }
+    { "source": "/:cmd/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/:cmd/:path*" }
   ]
 }
