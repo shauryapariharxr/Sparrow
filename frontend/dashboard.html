@@ -267,10 +267,32 @@ tbody tr:hover{background:var(--glass2)}
 .check{display:inline-flex;gap:7px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
 .check input{width:auto;accent-color:var(--brand)}
 @media (max-width:640px){.page{padding:22px 16px 70px}.topbar{padding:0 16px}}
+/* ── backend wake-up overlay ── */
+.wake{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:var(--bg);transition:opacity .45s ease,visibility .45s ease}
+.wake.pre{opacity:0;pointer-events:none}
+.wake.done{opacity:0;visibility:hidden;pointer-events:none}
+.wake .logo{width:52px;height:52px;color:var(--text);filter:drop-shadow(0 0 18px var(--brand-dim))}
+[data-theme="dark"] .wake .logo{filter:drop-shadow(0 0 18px rgba(45,212,191,.35))}
+.wake-name{font:600 15px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.wake-orbit{position:relative;width:74px;height:6px}
+.wake-orbit i{position:absolute;top:0;width:6px;height:6px;border-radius:50%;background:var(--brand);animation:wakeSlide 1.15s cubic-bezier(.45,0,.55,1) infinite}
+.wake-orbit i:nth-child(2){animation-delay:.14s;opacity:.75}
+.wake-orbit i:nth-child(3){animation-delay:.28s;opacity:.5}
+@keyframes wakeSlide{0%{left:0}50%{left:calc(100% - 6px)}100%{left:0}}
+.wake-label{font:500 13px/1.5 var(--sans);color:var(--muted);text-align:center;min-height:20px}
+.wake-label b{color:var(--text);font-weight:600}
+
 </style>
 </head>
 <body>
 <div class="ambient"><div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div></div>
+
+<div class="wake" id="wake" hidden>
+  <svg class="logo" viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 24 C57 35 70 42 81 42 C72 51 61 54 55 54 L61 76 L50 66 L39 76 L45 54 C39 54 28 51 19 42 C30 42 43 35 50 24 Z" fill="currentColor"/></svg>
+  <div class="wake-name">Sparrow</div>
+  <div class="wake-orbit"><i></i><i></i><i></i></div>
+  <div class="wake-label" id="wakeMsg">Connecting…</div>
+</div>
 
 <header class="topbar">
   <a class="brand" href="/"><svg class="logo" viewBox="0 0 100 100" fill="none" aria-label="Sparrow" role="img"><path d="M50 24 C57 35 70 42 81 42 C72 51 61 54 55 54 L61 76 L50 66 L39 76 L45 54 C39 54 28 51 19 42 C30 42 43 35 50 24 Z" fill="currentColor"/></svg></a>
@@ -830,7 +852,42 @@ document.addEventListener('keydown',function(ev){
   ev.preventDefault();setTab('cli');$('cliInput').focus();
 });
 
-boot();
+/* ── backend wake-up gate ───────────────────────────────────────
+ * Render free/low-tier instances sleep. Don't let boot() fire into a
+ * cold backend (it would bounce the user to /login); hold the branded
+ * overlay until /healthz answers, with honest status updates. */
+var wake=document.getElementById('wake'),wakeMsg=document.getElementById('wakeMsg');
+wake.hidden=false;wake.classList.add('pre');
+var wakeShown=false;
+var showWake=setTimeout(function(){wake.classList.remove('pre');wakeShown=true},450);
+var WAKE_STEPS=[[0,'Connecting…'],[4000,'Waking the server — free instances sleep when idle…'],[12000,'Still spinning up — this can take up to a minute.']];
+var wokenAt=Date.now(),wakeStep=0;
+var tickWake=function(){
+  var t=Date.now()-wokenAt;
+  while(wakeStep<WAKE_STEPS.length-1&&t>=WAKE_STEPS[wakeStep+1][0])wakeStep++;
+  wakeMsg.innerHTML='<b>'+WAKE_STEPS[wakeStep][1]+'</b>';
+};
+tickWake();
+var wakeClock=setInterval(tickWake,500);
+
+async function wakeProbe(){
+  try{
+    var r=await fetch('/healthz',{cache:'no-store'});
+    if(!r.ok)throw 0;
+    clearTimeout(showWake);
+    clearInterval(wakeClock);
+    wake.classList.add('done');
+    setTimeout(function(){wake.hidden=true},500);
+    return true;
+  }catch(e){return false}
+}
+var appStarted=false;
+function startApp(){if(appStarted)return;appStarted=true;boot();}
+(async function wakeLoop(){
+  for(var i=0;i<40;i++){ if(await wakeProbe()){startApp();return;} await new Promise(function(r){setTimeout(r,2500)}); }
+  wakeMsg.innerHTML='<b>Server unreachable.</b> <span style="color:var(--faint)">Retrying in the background…</span>';
+  (async function(){ for(;;){ if(await wakeProbe()){startApp();return;} await new Promise(function(r){setTimeout(r,5000)}); } })();
+})();
 })();
 </script>
 </body>
