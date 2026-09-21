@@ -25,9 +25,9 @@
     { "source": "/storage/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/storage/:path*" },
     { "source": "/subscribe/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/subscribe/:path*" },
     { "source": "/pipeline", "destination": "https://sparrow-backend-kixz.onrender.com/pipeline" },
-    { "source": "/login", "destination": "/auth.html" },
-    { "source": "/signup", "destination": "/auth.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/login", "destination": "/auth" },
+    { "source": "/signup", "destination": "/auth" },
+    { "source": "/dashboard", "destination": "/dashboard" },
     { "source": "/:cmd/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/:cmd/:path*" }
   ]
 }
