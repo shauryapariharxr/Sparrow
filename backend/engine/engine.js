@@ -206,6 +206,15 @@ class Engine {
     if (typeof fn !== 'function') {
       return { error: `ERR unknown command '${name}'` };
     }
+    // Arity guard: command methods declare their required parameters, so a
+    // call with fewer args can never be valid. True variadics use rest syntax
+    // (...args) which keeps fn.length at the required minimum. The set below
+    // covers commands whose trailing argument is optional (Redis arity -2/-3
+    // family: LPOP key [count] etc). Mirrors Redis:
+    // "ERR wrong number of arguments".
+    if (args.length < fn.length && !OPTIONAL_ARITY.has(name)) {
+      return this.wrongArg(name);
+    }
     try {
       return fn.call(this, ...args);
     } catch (e) {
@@ -216,6 +225,10 @@ class Engine {
 
 // Attach command mixins (Core first, Collections overrides nothing in Core).
 Object.assign(Engine.prototype, Core, Collections);
+
+// Commands whose last parameter is optional (declared as a normal param but
+// read conditionally) — exempt from the fn.length arity guard.
+const OPTIONAL_ARITY = new Set(['LPOP', 'RPOP', 'SPOP', 'SRANDMEMBER', 'ZPOPMIN', 'ZPOPMAX']);
 
 // Hide pseudo-commands from execute()'s dynamic lookup.
 const HIDDEN = ['_incrBy', '_expire', '_push', '_pushX', '_popList', '_collectSets', 'applyStringRange',

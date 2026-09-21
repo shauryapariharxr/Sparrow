@@ -27,6 +27,23 @@ class ControlService {
     // tokenHash -> { dbId, readonly, checkedAt }
     this._tokenCache = new Map();
     this.TOKEN_CACHE_TTL_MS = 10_000;
+    this._sessionGcTimer = null;
+    this.purgeExpiredSessions();
+  }
+
+  /** Hourly GC: expired sessions linger forever unless presented again. */
+  purgeExpiredSessions() {
+    try { this.store.purgeExpiredSessions(); } catch { /* non-fatal */ }
+  }
+
+  startSessionGc(intervalMs = 60 * 60 * 1000) {
+    if (this._sessionGcTimer) return;
+    this._sessionGcTimer = setInterval(() => this.purgeExpiredSessions(), intervalMs);
+    this._sessionGcTimer.unref();
+  }
+
+  stopSessionGc() {
+    if (this._sessionGcTimer) { clearInterval(this._sessionGcTimer); this._sessionGcTimer = null; }
   }
 
   // ── users & sessions ────────────────────────────────────────────

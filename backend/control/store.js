@@ -109,6 +109,10 @@ class ControlStore {
     this.prepare('DELETE FROM sessions WHERE token = ?').run(token);
   }
 
+  purgeExpiredSessions() {
+    this.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(Date.now());
+  }
+
   // ── databases ───────────────────────────────────────────────────
   createDatabase(db) {
     this.prepare(`INSERT INTO databases (id, user_id, name, created_at, max_keys, max_memory_bytes, max_value_bytes)

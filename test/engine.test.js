@@ -293,3 +293,20 @@ test('dispatch: internal helpers are not callable as commands', () => {
   assert.ok(exec(e, '_INCRBY', 'k', '5').error.includes('unknown command'));
   assert.ok(exec(e, 'EXECUTE', 'GET', 'x').error.includes('unknown command'));
 });
+
+test('dispatch: missing-arg commands reject instead of coercing undefined', () => {
+  const e = makeEngine();
+  // Path-style /PUBLISH/channel sends one arg — must be an arity error,
+  // never publish the literal string "undefined".
+  assert.ok(exec(e, 'PUBLISH', 'chan').error.includes('wrong number of arguments'));
+  exec(e, 'PUBLISH', 'chan', 'x');
+  // Optional-trailing-arg family must still work with zero optional args.
+  exec(e, 'RPUSH', 'l', 'a', 'b');
+  assert.strictEqual(exec(e, 'LPOP', 'l').toString(), 'a');
+  assert.strictEqual(exec(e, 'RPOP', 'l').toString(), 'b');
+  exec(e, 'SADD', 's', 'm1', 'm2');
+  const rand = exec(e, 'SRANDMEMBER', 's').toString();
+  assert.ok(rand === 'm1' || rand === 'm2', 'SRANDMEMBER returns a member');
+  const popped = exec(e, 'SPOP', 's');
+  assert.ok(popped.toString() === 'm1' || popped.toString() === 'm2', 'SPOP returns a member');
+});

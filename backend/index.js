@@ -39,6 +39,7 @@ function main() {
   const { server, control, tenants, gateway, config: cfg } = createServer();
 
   tenants.start();
+  control.startSessionGc();
   server.listen(cfg.port, cfg.host, () => {
     console.log(`[sparrow] gateway listening on http://${cfg.host}:${cfg.port}`);
     console.log(`[sparrow] landing: http://${cfg.host}:${cfg.port}  ·  console: http://${cfg.host}:${cfg.port}/dashboard`);
@@ -56,6 +57,7 @@ function main() {
     if (resp) resp.stop();
     tenants.stop();          // flush + snapshot everything
     gateway.stop();
+    control.stopSessionGc();
     control.close();
     process.exit(0);
   };

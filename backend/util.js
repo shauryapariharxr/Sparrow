@@ -125,18 +125,28 @@ function parseCookies(req) {
     if (idx === -1) continue;
     const k = part.slice(0, idx).trim();
     const v = part.slice(idx + 1).trim();
-    if (k) out[k] = decodeURIComponent(v);
+    if (!k) continue;
+    try {
+      out[k] = decodeURIComponent(v);
+    } catch {
+      out[k] = v; // malformed escape — keep raw value; session lookup will miss
+    }
   }
   return out;
 }
 
 function setSessionCookie(res, cookieName, value, maxAgeSeconds) {
+  // PaaS deployments (Render injects RENDER/PORT) always sit behind HTTPS —
+  // mark the session cookie Secure so it can never leak over plain HTTP.
+  // Local dev stays off Secure so http://127.0.0.1 login keeps working.
+  const onPaaS = !!(process.env.RENDER || process.env.PORT);
   const parts = [
     `${cookieName}=${encodeURIComponent(value)}`,
     'Path=/',
     'HttpOnly',
     'SameSite=Lax',
     `Max-Age=${maxAgeSeconds}`,
+    ...(onPaaS ? ['Secure'] : []),
   ];
   const prev = res.getHeader('Set-Cookie');
   const arr = prev ? (Array.isArray(prev) ? prev.concat(parts.join('; ')) : [prev, parts.join('; ')]) : [parts.join('; ')];
