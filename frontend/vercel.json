@@ -5,6 +5,7 @@
   "rewrites": [
     { "source": "/healthz", "destination": "https://sparrow-backend-kixz.onrender.com/healthz" },
     { "source": "/auth/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/auth/:path*" },
+    { "source": "/databases", "destination": "https://sparrow-backend-kixz.onrender.com/databases" },
     { "source": "/databases/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/databases/:path*" },
     { "source": "/tokens/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/tokens/:path*" },
     { "source": "/usage/:path*", "destination": "https://sparrow-backend-kixz.onrender.com/usage/:path*" },
