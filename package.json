@@ -3,16 +3,16 @@
   "version": "0.2.0",
   "description": "Sparrow — multi-tenant, HTTP-accessible Redis-compatible data platform (Upstash-style). Landing page, auth, dashboard, hand-built Redis core engine, REST gateway, control plane. Zero runtime dependencies.",
   "type": "commonjs",
-  "main": "src/index.js",
+  "main": "backend/index.js",
   "bin": {
     "sparrow": "bin/redex.js"
   },
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "start": "node backend/index.js",
+    "dev": "node --watch backend/index.js",
     "test": "node --test --test-reporter=spec",
     "cli": "node bin/redex.js",
-    "check": "node --check src/index.js && node --check bin/redex.js"
+    "check": "node --check backend/index.js && node --check bin/redex.js"
   },
   "engines": {
     "node": ">=22.5.0"

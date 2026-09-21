@@ -324,7 +324,7 @@ curl -X POST https://your-host/set/greeting/hello \
         <div class="qs-step"><div class="qs-num">4</div><div><h4>From any runtime</h4><p>A single <code>fetch()</code> from Node, edge, or the browser — no driver.</p></div></div>
         <div class="codecard">
           <div class="codecard-bar">any runtime</div>
-          <pre><span class="tok-k">const</span> r = <span class="tok-k">await</span> fetch(<span class="tok-s">"https://your-host"</span>, {
+          <pre><span class="tok-k">const</span> r = <span class="tok-k">await</span> fetch(<span class="tok-s">"https://your-host/pipeline"</span>, {
   method: <span class="tok-s">"POST"</span>,
   headers: { Authorization: <span class="tok-s">"Bearer sparrow_…"</span> },
   body: JSON.stringify([<span class="tok-s">"GET"</span>, <span class="tok-s">"greeting"</span>]),

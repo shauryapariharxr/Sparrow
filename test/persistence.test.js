@@ -7,9 +7,9 @@ const os = require('os');
 const path = require('path');
 
 process.env.REDEX_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'redex-persist-'));
-const config = require('../src/config');
-const { Engine } = require('../src/engine/engine');
-const { Persistence } = require('../src/engine/persistence');
+const config = require('../backend/config');
+const { Engine } = require('../backend/engine/engine');
+const { Persistence } = require('../backend/engine/persistence');
 
 function exec(e, ...args) {
   return e.execute(args.map((a) => Buffer.from(String(a), 'utf8')));

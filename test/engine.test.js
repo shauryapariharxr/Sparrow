@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { Engine } = require('../src/engine/engine');
+const { Engine } = require('../backend/engine/engine');
 
 function makeEngine(limits = {}) {
   return new Engine({

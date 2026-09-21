@@ -72,7 +72,7 @@ function safeParse(s) {
 async function main() {
   switch (cmd) {
     case 'up': {
-      require('../src/index.js').main();
+      require('../backend/index.js').main();
       break;
     }
 

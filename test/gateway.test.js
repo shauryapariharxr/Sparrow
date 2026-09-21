@@ -16,7 +16,7 @@ process.env.REDEX_RL_CAPACITY = '50';
 process.env.REDEX_RL_REFILL_PER_SEC = '1';
 process.env.REDEX_RL_MAX_BURST = '10';
 
-const { createServer } = require('../src/index');
+const { createServer } = require('../backend/index');
 
 const { server, control, tenants } = createServer();
 let baseUrl = '';

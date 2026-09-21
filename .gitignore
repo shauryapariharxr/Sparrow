@@ -6,3 +6,4 @@ data/
 coverage/
 .freebuff
 
+data-server.pid

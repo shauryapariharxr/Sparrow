@@ -579,11 +579,12 @@ async function openDatabase(id,fromHash){
   loadOverview();
 }
 function buildCurl(db){
+  var base=location.protocol+'//'+location.host;
   return '<span class="c"># set</span>\n'+
-    'curl -X POST <span class="u">http://'+location.host+'/set/greeting/hello</span> \\\n'+
+    'curl -X POST <span class="u">'+base+'/set/greeting/hello</span> \\\n'+
     '  -H <span class="s">"Authorization: Bearer '+esc(state.activeToken?state.activeToken.slice(0,12)+'…':'sparrow_…')+'"</span>\n\n'+
     '<span class="c"># get — JSON command style</span>\n'+
-    'curl -X POST <span class="u">http://'+location.host+'/</span> \\\n'+
+    'curl -X POST <span class="u">'+base+'/pipeline</span> \\\n'+
     '  -H <span class="s">"Authorization: Bearer …"</span> \\\n'+
     '  -d <span class="s">\'["GET","greeting"]\'</span>   <span class="c"># → {"result":"hello"}</span>';
 }
@@ -728,7 +729,7 @@ function renderData(){
       tr.querySelector('td:nth-child(3)').appendChild(d);
     });
     tr.querySelector('button').onclick=async function(){
-      try{await dataApi('/',[ 'DEL', k.key ]);toast('Deleted '+k.key);scanData();}
+      try{await dataApi('/pipeline',[ 'DEL', k.key ]);toast('Deleted '+k.key);scanData();}
       catch(e){toast(e.message,true)}
     };
     tb.appendChild(tr);
@@ -766,7 +767,7 @@ async function runCli(){
   if(!state.activeToken){cliLog('no token — create one in the Tokens tab','err');return}
   try{
     var isPipeline=Array.isArray(cmd[0]);
-    var res=await dataApi('/',cmd);
+    var res=await dataApi('/pipeline',cmd);
     cliLog(JSON.stringify(res,null,isPipeline?0:1),Array.isArray(res)&&res.some(function(x){return x&&x.error})?'err':'ok');
     if(state.tab==='overview')loadOverview();
   }catch(e){cliLog('error: '+e.message,'err')}

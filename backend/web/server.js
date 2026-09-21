@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const STATIC_DIR = path.join(__dirname);
+const STATIC_DIR = path.join(__dirname, '..', '..', 'frontend');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -28,8 +28,8 @@ const MIME = {
 };
 
 const PAGES = {
-  '/': 'landing.html',
-  '/index.html': 'landing.html',
+  '/': 'index.html',
+  '/index.html': 'index.html',
   '/login': 'auth.html',
   '/signup': 'auth.html',
   '/dashboard': 'dashboard.html',

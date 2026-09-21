@@ -171,35 +171,36 @@ In production, put Nginx/Caddy in front for TLS termination and set `REDEX_HOST`
 
 ## Project layout
 
-```
-src/
-  index.js                 entrypoint: wires everything, graceful shutdown
-  config.js                env-driven configuration
-  util.js                  ids, tokens, hashing, HTTP helpers
+```frontend/                 static site (deploy target: Vercel)
+  vercel.json             serves the pages, proxies API paths to the Render backend
+  index.html              marketing page (Vercel static root)
+  auth.html               login/signup
+  dashboard.html          console SPA
+  favicon.svg / sparrow*.svg  icons
+
+backend/                  Node server (deploy target: Render)
+  index.js                entrypoint: wires everything, graceful shutdown
+  config.js               env-driven configuration
+  util.js                 ids, tokens, hashing, HTTP helpers
   engine/
-    store.js               Keyspace: map, expiry index, memory accounting
-    engine.js              per-tenant Engine + command dispatch + introspection
-    commands_core.js       strings, keyspace, expiry, server commands
-    commands_collections.js lists, sets, zsets, hashes
+    store.js              Keyspace: map, expiry index, memory accounting
+    engine.js             per-tenant Engine + command dispatch + introspection
+    commands_core.js      strings, keyspace, expiry, server commands
+    commands_collections.js  lists, sets, zsets, hashes
     cmdutil.js / zsetutil.js  parsing, glob, score/lex ranges
-    persistence.js         AOF + RDB per tenant
-    pubsub.js              channel hub (PUBLISH + SSE fanout)
+    persistence.js        AOF + RDB per tenant
+    pubsub.js             channel hub (PUBLISH + SSE fanout)
     resp.js / respServer.js  RESP codec + loopback debug server
-    tenantManager.js       tenant registry, background cycles
+    tenantManager.js      tenant registry, background cycles
   control/
-    store.js               SQLite schema + queries
-    service.js             signup/login, databases, tokens, usage
+    store.js              SQLite schema + queries
+    service.js            signup/login, databases, tokens, usage
   gateway/
-    index.js               HTTP surface (data + control plane)
-    rateLimiter.js         token buckets
-    serialization.js       replies → JSON
+    index.js              HTTP surface (data + control plane)
+    rateLimiter.js        token buckets
+    serialization.js      replies → JSON
   web/
-    server.js              page/asset serving + session-scoped introspection API
-    landing.html           marketing page
-    auth.html              login/signup
-    dashboard.html         console SPA
-    sparrow.svg            logo (white sparrow mark)
-    favicon.svg            favicon (sparrow on brand tile)
+    server.js             page/asset serving + session-scoped introspection API
 test/                      node:test suites (engine, persistence, gateway)
 bin/redex.js               CLI
 scripts/e2e-live.js        live end-to-end check against a running server
