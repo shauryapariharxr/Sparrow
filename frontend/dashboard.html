@@ -273,12 +273,9 @@ tbody tr:hover{background:var(--glass2)}
 .wake.done{opacity:0;visibility:hidden;pointer-events:none}
 .wake .logo{width:52px;height:52px;color:var(--text);filter:drop-shadow(0 0 18px var(--brand-dim))}
 [data-theme="dark"] .wake .logo{filter:drop-shadow(0 0 18px rgba(45,212,191,.35))}
-.wake-name{font:600 15px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.wake-orbit{position:relative;width:74px;height:6px}
-.wake-orbit i{position:absolute;top:0;width:6px;height:6px;border-radius:50%;background:var(--brand);animation:wakeSlide 1.15s cubic-bezier(.45,0,.55,1) infinite}
-.wake-orbit i:nth-child(2){animation-delay:.14s;opacity:.75}
-.wake-orbit i:nth-child(3){animation-delay:.28s;opacity:.5}
-@keyframes wakeSlide{0%{left:0}50%{left:calc(100% - 6px)}100%{left:0}}
+.wake-bar{width:180px;height:3px;border-radius:999px;background:var(--glass-border);overflow:hidden}
+.wake-bar i{display:block;width:40%;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand),var(--brand2));animation:wakeBar 1.3s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes wakeBar{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 .wake-label{font:500 13px/1.5 var(--sans);color:var(--muted);text-align:center;min-height:20px}
 .wake-label b{color:var(--text);font-weight:600}
 
@@ -289,8 +286,7 @@ tbody tr:hover{background:var(--glass2)}
 
 <div class="wake" id="wake" hidden>
   <svg class="logo" viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 24 C57 35 70 42 81 42 C72 51 61 54 55 54 L61 76 L50 66 L39 76 L45 54 C39 54 28 51 19 42 C30 42 43 35 50 24 Z" fill="currentColor"/></svg>
-  <div class="wake-name">Sparrow</div>
-  <div class="wake-orbit"><i></i><i></i><i></i></div>
+  <div class="wake-bar"><i></i></div>
   <div class="wake-label" id="wakeMsg">Connecting…</div>
 </div>
 
